@@ -1,0 +1,9 @@
+{
+  "name": "trends",
+  "version": "1.0.0",
+  "description": "画像/趋势总览",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

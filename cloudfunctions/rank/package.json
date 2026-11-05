@@ -1,0 +1,9 @@
+{
+  "name": "rank",
+  "version": "1.0.0",
+  "description": "排名查询（精确排名 + 档位统计 + 期次趋势）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

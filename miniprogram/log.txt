@@ -1,0 +1,8 @@
+Loading project all files...
+Loading project all files success
+编译 app.json
+app.json: 未找到 ["pages"][0] 对应的 pages/rank/rank.wxml 文件
+编译 app.json
+app.json: 未找到 ["pages"][0] 对应的 pages/rank/rank.wxml 文件
+编译 app.json
+app.json: 未找到 ["pages"][0] 对应的 pages/rank/rank.wxml 文件

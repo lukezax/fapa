@@ -1,0 +1,267 @@
+<view class="container">
+
+  <!-- 筛选面板 -->
+  <view class="card filter-card">
+    <view class="filter-header" bindtap="toggleFilter">
+      <text class="filter-title">筛选</text>
+      <text class="filter-arrow">{{filterOpen ? '▲' : '▼'}}</text>
+    </view>
+    <view wx:if="{{filterOpen}}" class="filter-body">
+      <!-- 品牌 -->
+      <view class="filter-group">
+        <view class="filter-label">品牌</view>
+        <view class="chips">
+          <view
+            wx:for="{{brandChips}}"
+            wx:key="name"
+            class="chip {{item.selected ? 'chip-on' : ''}}"
+            data-key="brand"
+            data-name="{{item.name}}"
+            bindtap="onChipTap"
+          >{{item.name}}</view>
+        </view>
+      </view>
+      <!-- 法院 -->
+      <view class="filter-group">
+        <view class="filter-label">法院</view>
+        <view class="chips">
+          <view
+            wx:for="{{courtChips}}"
+            wx:key="name"
+            class="chip {{item.selected ? 'chip-on' : ''}}"
+            data-key="court"
+            data-name="{{item.name}}"
+            bindtap="onChipTap"
+          >{{item.name}}</view>
+        </view>
+      </view>
+      <!-- 燃料 -->
+      <view class="filter-group">
+        <view class="filter-label">燃料</view>
+        <view class="chips">
+          <view
+            wx:for="{{fuelChips}}"
+            wx:key="name"
+            class="chip {{item.selected ? 'chip-on' : ''}}"
+            data-key="fuel_type"
+            data-name="{{item.name}}"
+            bindtap="onChipTap"
+          >{{item.name}}</view>
+        </view>
+      </view>
+      <!-- 排放 -->
+      <view class="filter-group">
+        <view class="filter-label">排放</view>
+        <view class="chips">
+          <view
+            wx:for="{{emissionChips}}"
+            wx:key="name"
+            class="chip {{item.selected ? 'chip-on' : ''}}"
+            data-key="emission"
+            data-name="{{item.name}}"
+            bindtap="onChipTap"
+          >{{item.name}}</view>
+        </view>
+      </view>
+      <!-- 证件 + 抵押（三态） -->
+      <view class="filter-group">
+        <view class="filter-label">证件与抵押</view>
+        <view wx:for="{{segments}}" wx:for-item="seg" wx:key="key" class="seg-row">
+          <text class="seg-label">{{seg.label}}</text>
+          <view class="seg-control">
+            <view
+              class="seg-btn {{seg.value === null ? 'seg-on' : ''}}"
+              data-key="{{seg.key}}"
+              data-val=""
+              bindtap="onSegmentTap"
+            >全部</view>
+            <view
+              class="seg-btn {{seg.value === seg.yes ? 'seg-on' : ''}}"
+              data-key="{{seg.key}}"
+              data-val="{{seg.yes}}"
+              bindtap="onSegmentTap"
+            >{{seg.yes}}</view>
+            <view
+              class="seg-btn {{seg.value === seg.no ? 'seg-on' : ''}}"
+              data-key="{{seg.key}}"
+              data-val="{{seg.no}}"
+              bindtap="onSegmentTap"
+            >{{seg.no}}</view>
+          </view>
+        </view>
+      </view>
+      <!-- 价格区间（元） -->
+      <view class="filter-group">
+        <view class="filter-label">成交价（元）</view>
+        <view class="range-row">
+          <input
+            class="range-input"
+            type="number"
+            placeholder="最低"
+            data-key="final_price_min"
+            value="{{filters.final_price_min}}"
+            bindinput="onInput"
+          />
+          <text class="range-sep">—</text>
+          <input
+            class="range-input"
+            type="number"
+            placeholder="最高"
+            data-key="final_price_max"
+            value="{{filters.final_price_max}}"
+            bindinput="onInput"
+          />
+        </view>
+      </view>
+      <!-- 违章数区间 -->
+      <view class="filter-group">
+        <view class="filter-label">违章数（起）</view>
+        <view class="range-row">
+          <input
+            class="range-input"
+            type="number"
+            placeholder="最少"
+            data-key="violation_min"
+            value="{{filters.violation_min}}"
+            bindinput="onInput"
+          />
+          <text class="range-sep">—</text>
+          <input
+            class="range-input"
+            type="number"
+            placeholder="最多"
+            data-key="violation_max"
+            value="{{filters.violation_max}}"
+            bindinput="onInput"
+          />
+        </view>
+      </view>
+      <!-- 里程上限（万公里） -->
+      <view class="filter-group">
+        <view class="filter-label">里程上限（万公里）</view>
+        <view class="range-row">
+          <input
+            class="range-input"
+            type="digit"
+            placeholder="上限"
+            value="{{mileageWan}}"
+            bindinput="onMileageInput"
+          />
+        </view>
+      </view>
+      <!-- 费用上限（元） -->
+      <view class="filter-group">
+        <view class="filter-label">费用上限（元）</view>
+        <view class="fee-row">
+          <view class="fee-item">
+            <text class="fee-name">总费用</text>
+            <input
+              class="fee-input"
+              type="number"
+              placeholder="上限"
+              data-key="extra_fee_max"
+              value="{{filters.extra_fee_max}}"
+              bindinput="onInput"
+            />
+          </view>
+          <view class="fee-item">
+            <text class="fee-name">停车</text>
+            <input
+              class="fee-input"
+              type="number"
+              placeholder="上限"
+              data-key="parking_max"
+              value="{{filters.parking_max}}"
+              bindinput="onInput"
+            />
+          </view>
+          <view class="fee-item">
+            <text class="fee-name">维修</text>
+            <input
+              class="fee-input"
+              type="number"
+              placeholder="上限"
+              data-key="repair_max"
+              value="{{filters.repair_max}}"
+              bindinput="onInput"
+            />
+          </view>
+          <view class="fee-item">
+            <text class="fee-name">保证金</text>
+            <input
+              class="fee-input"
+              type="number"
+              placeholder="上限"
+              data-key="deposit_max"
+              value="{{filters.deposit_max}}"
+              bindinput="onInput"
+            />
+          </view>
+        </view>
+      </view>
+      <!-- 操作按钮 -->
+      <view class="filter-actions">
+        <view class="btn-reset" bindtap="onReset">重置</view>
+        <view class="btn-primary btn-apply" bindtap="onApply">应用筛选</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 排序栏 -->
+  <view class="sort-bar">
+    <view
+      wx:for="{{sorts}}"
+      wx:key="key"
+      class="sort-item {{sort === item.key ? 'sort-on' : ''}}"
+      data-key="{{item.key}}"
+      bindtap="onSortTap"
+    >
+      <text>{{item.label}}</text>
+      <text wx:if="{{sort === item.key}}" class="sort-arrow">{{dir === 'asc' ? '▲' : '▼'}}</text>
+    </view>
+  </view>
+
+  <!-- 列表 -->
+  <view wx:if="{{loading}}" class="loading">加载中...</view>
+  <view wx:elif="{{cars.length === 0}}" class="empty">无符合条件的车辆</view>
+  <block wx:else>
+    <view
+      wx:for="{{cars}}"
+      wx:key="car_link"
+      class="card car-card"
+      data-link="{{item.car_link}}"
+      bindtap="onCardTap"
+    >
+      <view class="car-top">
+        <text class="tag tag-hot">{{item.brand}}</text>
+        <text class="tag">{{item.court}}</text>
+      </view>
+      <view class="car-name">{{item.car_name}}</view>
+      <view class="car-price-row">
+        <text class="car-start">起拍 {{item.startText}}</text>
+        <text class="car-final">{{item.finalText}}</text>
+      </view>
+      <view class="car-tags" wx:if="{{item.fuelEmissionText || item.docsText || item.extraFeeText}}">
+        <text class="tag" wx:if="{{item.fuelEmissionText}}">{{item.fuelEmissionText}}</text>
+        <text class="tag {{item.docsText === '证件齐' ? 'tag-ok' : ''}}" wx:if="{{item.docsText}}">{{item.docsText}}</text>
+        <text class="tag tag-hot" wx:if="{{item.extraFeeText}}">额外费用{{item.extraFeeText}}</text>
+      </view>
+      <view class="car-meta">
+        <text>{{item.mileageText}}</text>
+        <text class="meta-sep">·</text>
+        <text>{{item.violationText}}</text>
+        <text class="meta-sep">·</text>
+        <text>{{item.periodText}}</text>
+      </view>
+      <view class="car-preview" wx:if="{{item.previewShort}}">看车：{{item.previewShort}}</view>
+      <view wx:if="{{item.source === 'winner_only'}}" class="winner-only">仅成交记录，无详细车况</view>
+    </view>
+    <view wx:if="{{loadingMore}}" class="loading">加载中...</view>
+    <view wx:elif="{{noMore}}" class="no-more">没有更多了</view>
+  </block>
+
+  <!-- 列表底部 Banner -->
+  <view wx:if="{{bannerUnit}}" class="ad-container">
+    <ad unit-id="{{bannerUnit}}" binderror="onBannerError"></ad>
+  </view>
+</view>

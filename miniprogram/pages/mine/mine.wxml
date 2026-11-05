@@ -1,0 +1,51 @@
+<view class="container">
+  <!-- 个人信息卡（纯展示） -->
+  <view class="card profile-card">
+    <view class="profile-title">京慧车讯</view>
+    <view class="profile-sub">精确排名 · 车辆筛选 · 成交趋势</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading">加载中...</view>
+
+  <block wx:else>
+    <!-- 我的收藏 -->
+    <view class="card">
+      <view class="card-title">我的收藏</view>
+      <view wx:if="{{favorites.length}}">
+        <view class="fav-row" wx:for="{{favorites}}" wx:key="car_link"
+              data-link="{{item.car_link}}" bindtap="onFavTap">
+          <view class="fav-name">{{item.car_name}}</view>
+          <view class="fav-price" wx:if="{{item.finalPriceText}}">{{item.finalPriceText}}</view>
+          <view class="fav-arrow">›</view>
+        </view>
+        <view wx:if="{{favoriteTotal > favorites.length}}" class="fav-more">
+          …还有 {{favoriteTotal - favorites.length}} 条
+        </view>
+      </view>
+      <view wx:else class="empty">暂无收藏</view>
+    </view>
+
+    <!-- 查询历史 -->
+    <view class="card">
+      <view class="card-title">查询历史</view>
+      <view wx:if="{{histories.length}}">
+        <view class="his-row" wx:for="{{histories}}" wx:key="_key"
+              data-times="{{item.times}}" data-reg-time="{{item.reg_time}}" bindtap="onHisTap">
+          <view class="his-top">
+            <text class="tag">{{item.times}}次</text>
+            <text class="his-reg">{{item.regTimeText}}</text>
+          </view>
+          <view class="his-summary">{{item.summary}}</view>
+          <view class="his-time">{{item.createdText}}</view>
+        </view>
+        <view class="clear-btn" bindtap="clearHistory">清空历史</view>
+      </view>
+      <view wx:else class="empty">暂无查询历史</view>
+    </view>
+  </block>
+
+  <!-- 底部 Banner -->
+  <view class="ad-container" wx:if="{{!bannerError}}">
+    <ad unit-id="{{bannerMine}}" binderror="onBannerError"></ad>
+  </view>
+</view>

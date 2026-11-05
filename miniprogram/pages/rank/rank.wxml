@@ -1,0 +1,175 @@
+<!-- pages/rank/rank.wxml — 排名查询 -->
+<view class="container">
+
+  <!-- 输入区（查询成功后隐藏，可点"重新查询"返回） -->
+  <view class="card" wx:if="{{!result}}">
+    <view class="card-title">排名查询</view>
+
+    <view class="rank-field">
+      <text class="rank-label">摇号次数</text>
+      <input class="rank-input" type="number" value="{{times}}" bindinput="onTimesInput"
+        placeholder="请输入摇号次数" />
+    </view>
+
+    <view class="rank-field">
+      <text class="rank-label">注册时间</text>
+      <view class="rank-time-row">
+        <picker mode="date" value="{{regDate}}" start="2000-01-01" end="2026-12-31" bindchange="onDateChange">
+          <view class="rank-picker">{{regDate}}</view>
+        </picker>
+        <picker mode="time" value="{{regTime}}" bindchange="onTimeChange">
+          <view class="rank-picker">{{regTime}}</view>
+        </picker>
+        <input class="rank-input rank-input-sm" type="number" value="{{regSec}}" bindinput="onSecInput"
+          placeholder="秒" maxlength="2" />
+        <input class="rank-input rank-input-sm" type="number" value="{{regMs}}" bindinput="onMsInput"
+          placeholder="毫秒" maxlength="3" />
+      </view>
+    </view>
+
+    <view class="btn-primary {{loading ? 'rank-btn-disabled' : ''}}" bindtap="onQuery">
+      {{loading ? '查询中...' : '查询排名'}}
+    </view>
+  </view>
+
+  <!-- 结果区 -->
+  <block wx:if="{{result}}">
+    <view class="rank-reset" bindtap="onReset">重新查询</view>
+
+    <!-- 排名卡片 -->
+    <view class="card rank-rank-card">
+      <view class="rank-rank-main">
+        <text class="rank-rank-num">{{result.rank}}</text>
+        <text class="rank-rank-suffix">名</text>
+      </view>
+      <view class="rank-rank-sub">共 {{result.total}} 人参与</view>
+      <view class="rank-rank-stats">
+        <view class="rank-stat">
+          <text class="rank-stat-val">{{result.user_pct}}%</text>
+          <text class="rank-stat-label">排名百分比</text>
+        </view>
+        <view class="rank-stat">
+          <text class="rank-stat-val">{{result.total_matches}}</text>
+          <text class="rank-stat-label">匹配车辆</text>
+        </view>
+        <view class="rank-stat">
+          <text class="rank-stat-val rank-stat-red">{{minFinalPriceText}}</text>
+          <text class="rank-stat-label">最低成交价</text>
+        </view>
+      </view>
+      <button class="rank-share-btn" open-type="share">分享这个结果</button>
+    </view>
+
+    <!-- 综合建议 -->
+    <view class="rank-advice" wx:if="{{topAdvice}}">
+      <text class="rank-advice-label">综合建议</text>
+      <text class="rank-advice-text">优先关注「{{topAdvice.bracket}}」——与你水平相当的成交者 {{topAdvice.matchPct}}% 选它 · 平均 {{topAdvice.times}} 次{{topAdvice.diff ? '（' + topAdvice.diff + '）' : ''}}</text>
+    </view>
+
+    <!-- 数据口径说明 -->
+    <view class="card rank-rules">
+      <view class="card-title">数据口径</view>
+      <view class="rank-rules-line">· 车辆普遍按公布的最高限价成交，最终归属由排序决定：摇号次数多者优先，同次数比注册时间先后</view>
+      <view class="rank-rules-line">· 匹配策略：在历史各期中找到排名百分比与你相当（前 {{result.user_pct}}%）的成交者，看他们选了什么车</view>
+      <view class="rank-rules-line">· 推荐度：与你水平相当的成交者中选择该价位段的占比，越高说明该档位越适合你；「成交者平均次数」帮你判断自己的次数够不够</view>
+    </view>
+
+    <!-- 全景图卡片 -->
+    <view class="card">
+      <view class="card-title">价格档位全景</view>
+      <view class="rank-pano-row" wx:for="{{panoramaRows}}" wx:key="bracket">
+        <view class="rank-pano-head">
+          <text class="rank-pano-bracket">{{item.bracket}}</text>
+          <text class="rank-pano-pct">{{item.match_pct}}%</text>
+        </view>
+        <view class="rank-pano-track">
+          <view class="rank-pano-bar {{item.barClass}}" style="width: {{item.match_pct}}%;"></view>
+        </view>
+      </view>
+      <view class="empty" wx:if="{{!panoramaRows.length}}">暂无档位数据</view>
+    </view>
+
+    <!-- 档位卡片（按 panorama 顺序） -->
+    <block wx:if="{{bracketCards.length}}">
+      <view class="card" wx:for="{{bracketCards}}" wx:for-item="bk" wx:key="bracket">
+        <view class="rank-bk-head">
+          <text class="rank-bk-title">{{bk.bracket}}</text>
+          <text class="tag {{bk.recClass}}" wx:if="{{bk.recommendation}}">{{bk.recommendation}}</text>
+        </view>
+
+        <view class="rank-bk-stats">
+          <view class="rank-bk-stat">
+            <text class="rank-bk-stat-num">{{bk.match_count}}</text>
+            <text class="rank-bk-stat-label">匹配车数</text>
+          </view>
+          <view class="rank-bk-stat">
+            <text class="rank-bk-stat-num">{{bk.avgFinalText}}</text>
+            <text class="rank-bk-stat-label">平均成交价</text>
+          </view>
+          <view class="rank-bk-stat">
+            <text class="rank-bk-stat-num">{{bk.avgTimesText}}</text>
+            <text class="rank-bk-stat-label">成交者平均次数</text>
+            <text class="rank-bk-diff {{bk.timesDiffClass}}" wx:if="{{bk.timesDiffText}}">{{bk.timesDiffText}}</text>
+          </view>
+          <view class="rank-bk-stat">
+            <text class="rank-bk-stat-num">{{bk.periods_covered}}</text>
+            <text class="rank-bk-stat-label">覆盖期次</text>
+          </view>
+        </view>
+
+        <!-- 本期在售（起拍价最低优先） -->
+        <view class="rank-bk-current" wx:if="{{bk.currentCars.length}}">
+          <view class="rank-bk-top5-title">本期在售 · 起拍价最低 {{bk.currentCars.length}} 台</view>
+          <view class="rank-car-row" wx:for="{{bk.currentCars}}" wx:for-item="m" wx:key="car_link"
+            bindtap="onCarTap" data-link="{{m.car_link}}">
+            <text class="rank-car-name">{{m.car_name}}</text>
+            <text class="rank-car-times" wx:if="{{m.meta}}">{{m.meta}}</text>
+            <text class="rank-car-price">起 {{m.start_text}}</text>
+            <text class="rank-car-arrow">›</text>
+          </view>
+        </view>
+
+        <view class="rank-bk-brands" wx:if="{{bk.brandChips.length}}">
+          <text class="rank-bk-brands-label">热门品牌</text>
+          <view class="rank-bk-chips">
+            <text class="rank-chip" wx:for="{{bk.brandChips}}" wx:for-item="chip" wx:key="brand">{{chip.brand}}×{{chip.count}}</text>
+          </view>
+        </view>
+
+        <view class="rank-bk-top5" wx:if="{{bk.top5.length}}">
+          <view class="rank-bk-top5-title">历史成交 · 最便宜 5 台</view>
+          <view class="rank-car-row" wx:for="{{bk.top5}}" wx:for-item="m" wx:key="car_link"
+            bindtap="onCarTap" data-link="{{m.car_link}}">
+            <text class="rank-car-name">{{m.car_name}}</text>
+            <text class="rank-car-times">{{m.times_text}}</text>
+            <text class="rank-car-price">{{m.final_price_text}}</text>
+            <text class="rank-car-zcid">{{m.result_zcid}}</text>
+            <text class="rank-car-arrow">›</text>
+          </view>
+        </view>
+      </view>
+    </block>
+    <view class="empty" wx:else>暂无档位数据</view>
+
+    <!-- 期次趋势卡片 -->
+    <view class="card">
+      <view class="card-title">期次趋势</view>
+      <view class="rank-trend-row" wx:for="{{periodTrend}}" wx:key="zcid">
+        <view class="rank-trend-head">
+          <text class="rank-trend-zcid">{{item.zcid_text}}</text>
+          <text class="rank-trend-meta">总人数 {{item.total_bidders}} · 成交 {{item.winner_count}} · 等效排名 {{item.user_equiv_rank}}</text>
+        </view>
+        <view class="rank-trend-car" wx:if="{{item.matched_car}}"
+          bindtap="onCarTap" data-link="{{item.matched_car.car_link}}">
+          <text class="rank-trend-car-label">最接近：</text>
+          <text class="rank-trend-car-name">{{item.matched_car.car_name}}</text>
+          <text class="rank-trend-car-price">{{item.matched_car.final_price_text}}</text>
+          <text class="rank-car-arrow">›</text>
+        </view>
+        <view class="rank-trend-car" wx:else>—</view>
+      </view>
+      <view class="empty" wx:if="{{!periodTrend.length}}">暂无期次数据</view>
+    </view>
+  </block>
+
+</view>

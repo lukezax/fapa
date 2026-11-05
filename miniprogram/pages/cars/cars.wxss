@@ -1,0 +1,307 @@
+/* pages/cars/cars.wxss — 车辆筛选列表页 */
+
+/* 期次 chips */
+.period-bar {
+  white-space: nowrap;
+  margin-bottom: 20rpx;
+}
+
+.period-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 10rpx 24rpx;
+  margin-right: 16rpx;
+  background: #fff;
+  border-radius: 999rpx;
+  font-size: 26rpx;
+  color: #57606f;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+}
+
+.period-chip.active {
+  background: #1a1a2e;
+  color: #fff;
+}
+
+.period-count {
+  font-size: 20rpx;
+  margin-left: 8rpx;
+  opacity: 0.7;
+}
+
+/* 筛选面板 */
+.filter-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.filter-arrow {
+  font-size: 22rpx;
+  color: #a0a0b0;
+}
+
+.filter-body {
+  padding: 0 24rpx 24rpx;
+  border-top: 2rpx solid #f0f2f5;
+}
+
+.filter-group {
+  margin-top: 24rpx;
+}
+
+.filter-label {
+  font-size: 26rpx;
+  color: #57606f;
+  margin-bottom: 12rpx;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.chip {
+  padding: 8rpx 20rpx;
+  margin: 0 12rpx 12rpx 0;
+  background: #f0f2f5;
+  color: #57606f;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+}
+
+.chip-on {
+  background: #e74c3c;
+  color: #fff;
+}
+
+/* 三态分段控件 */
+.seg-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.seg-label {
+  width: 120rpx;
+  font-size: 24rpx;
+  color: #57606f;
+  flex-shrink: 0;
+}
+
+.seg-control {
+  display: flex;
+  flex: 1;
+}
+
+.seg-btn {
+  flex: 1;
+  text-align: center;
+  padding: 10rpx 0;
+  font-size: 24rpx;
+  color: #57606f;
+  background: #f0f2f5;
+}
+
+.seg-btn:first-child {
+  border-radius: 8rpx 0 0 8rpx;
+}
+
+.seg-btn:last-child {
+  border-radius: 0 8rpx 8rpx 0;
+}
+
+.seg-on {
+  background: #1a1a2e;
+  color: #fff;
+}
+
+/* 区间输入 */
+.range-row {
+  display: flex;
+  align-items: center;
+}
+
+.range-input {
+  flex: 1;
+  background: #f0f2f5;
+  border-radius: 8rpx;
+  padding: 12rpx 16rpx;
+  font-size: 24rpx;
+}
+
+.range-sep {
+  margin: 0 12rpx;
+  color: #a0a0b0;
+}
+
+/* 费用上限（同一行小输入） */
+.fee-row {
+  display: flex;
+}
+
+.fee-item {
+  flex: 1;
+  margin-right: 12rpx;
+}
+
+.fee-item:last-child {
+  margin-right: 0;
+}
+
+.fee-name {
+  display: block;
+  font-size: 22rpx;
+  color: #a0a0b0;
+  margin-bottom: 8rpx;
+}
+
+.fee-input {
+  background: #f0f2f5;
+  border-radius: 8rpx;
+  padding: 10rpx 12rpx;
+  font-size: 22rpx;
+}
+
+/* 操作按钮 */
+.filter-actions {
+  display: flex;
+  margin-top: 28rpx;
+}
+
+.btn-reset {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx 0;
+  background: #f0f2f5;
+  color: #57606f;
+  border-radius: 12rpx;
+  font-size: 30rpx;
+  margin-right: 20rpx;
+}
+
+.btn-apply {
+  flex: 2;
+}
+
+/* 排序栏 */
+.sort-bar {
+  display: flex;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.sort-item {
+  flex: 1;
+  text-align: center;
+  font-size: 26rpx;
+  color: #57606f;
+}
+
+.sort-on {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.sort-arrow {
+  font-size: 20rpx;
+  margin-left: 4rpx;
+}
+
+/* 车辆卡片 */
+.car-card {
+  padding: 24rpx;
+}
+
+.car-top {
+  margin-bottom: 12rpx;
+}
+
+.car-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #2c3e50;
+  line-height: 1.4;
+  margin-bottom: 12rpx;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.car-price-row {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 10rpx;
+}
+
+.car-start {
+  font-size: 24rpx;
+  color: #a0a0b0;
+  margin-right: 20rpx;
+}
+
+.car-final {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #e74c3c;
+}
+
+.car-meta {
+  font-size: 24rpx;
+  color: #57606f;
+}
+
+.meta-sep {
+  margin: 0 10rpx;
+  color: #a0a0b0;
+}
+
+.winner-only {
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  color: #a0a0b0;
+}
+
+.no-more {
+  text-align: center;
+  color: #a0a0b0;
+  padding: 30rpx 0;
+  font-size: 24rpx;
+}
+/* 列表卡直接可见的关键信息（燃料/排放/证件/额外费用） */
+.car-tags {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 10rpx 0 4rpx;
+}
+
+.car-tags .tag {
+  margin: 0 12rpx 8rpx 0;
+}
+
+.tag-ok {
+  background: #e8f8ef;
+  color: #27ae60;
+}
+
+/* 看车地点（截断显示） */
+.car-preview {
+  font-size: 22rpx;
+  color: #57606f;
+  background: #f5f6fa;
+  border-radius: 8rpx;
+  padding: 8rpx 14rpx;
+  margin-top: 8rpx;
+}

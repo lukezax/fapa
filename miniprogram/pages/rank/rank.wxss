@@ -1,0 +1,442 @@
+/* pages/rank/rank.wxss — 排名查询页私有样式（不改全局类） */
+
+/* 查询按钮禁用态 */
+.rank-btn-disabled {
+  opacity: 0.6;
+}
+
+/* ---------- 输入区 ---------- */
+.rank-field {
+  margin-bottom: 24rpx;
+}
+
+.rank-label {
+  display: block;
+  font-size: 26rpx;
+  color: #57606f;
+  margin-bottom: 12rpx;
+}
+
+.rank-input {
+  background: #f5f6fa;
+  border-radius: 12rpx;
+  padding: 16rpx 20rpx;
+  font-size: 28rpx;
+  color: #2c3e50;
+}
+
+.rank-time-row {
+  display: flex;
+  align-items: center;
+}
+
+.rank-picker {
+  background: #f5f6fa;
+  border-radius: 12rpx;
+  padding: 16rpx 20rpx;
+  font-size: 26rpx;
+  color: #2c3e50;
+  margin-right: 12rpx;
+}
+
+.rank-input-sm {
+  width: 110rpx;
+  margin-right: 12rpx;
+  text-align: center;
+}
+
+/* ---------- 重新查询 ---------- */
+.rank-reset {
+  text-align: right;
+  color: #57606f;
+  font-size: 26rpx;
+  padding: 8rpx 0 16rpx;
+}
+
+/* ---------- 排名卡片 ---------- */
+.rank-rank-card {
+  text-align: center;
+}
+
+.rank-rank-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+}
+
+.rank-rank-num {
+  font-size: 80rpx;
+  font-weight: 700;
+  color: #e74c3c;
+  line-height: 1.1;
+}
+
+.rank-rank-suffix {
+  font-size: 32rpx;
+  color: #2c3e50;
+  margin-left: 8rpx;
+}
+
+.rank-rank-sub {
+  font-size: 26rpx;
+  color: #57606f;
+  margin-top: 8rpx;
+}
+
+.rank-rank-stats {
+  display: flex;
+  margin-top: 24rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid #f0f2f5;
+}
+
+.rank-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.rank-stat-val {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.rank-stat-red {
+  color: #e74c3c;
+}
+
+.rank-stat-label {
+  font-size: 22rpx;
+  color: #a0a0b0;
+  margin-top: 6rpx;
+}
+
+/* ---------- 全景图 ---------- */
+.rank-pano-row {
+  margin-bottom: 20rpx;
+}
+
+.rank-pano-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8rpx;
+}
+
+.rank-pano-bracket {
+  font-size: 26rpx;
+  color: #2c3e50;
+}
+
+.rank-pano-pct {
+  font-size: 24rpx;
+  color: #57606f;
+}
+
+.rank-pano-track {
+  height: 16rpx;
+  background: #f0f2f5;
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+
+.rank-pano-bar {
+  height: 100%;
+  border-radius: 8rpx;
+  transition: width 0.3s;
+}
+
+.rank-bar-red {
+  background: #e74c3c;
+}
+
+.rank-bar-orange {
+  background: #f39c12;
+}
+
+.rank-bar-gray {
+  background: #d0d3da;
+}
+
+/* ---------- 竞拍规则说明 ---------- */
+.rank-rules-line {
+  font-size: 24rpx;
+  color: #57606f;
+  line-height: 1.7;
+  margin-bottom: 6rpx;
+}
+
+/* ---------- 档位卡片 ---------- */
+.rank-bk-head {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.rank-bk-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-right: 12rpx;
+}
+
+/* 推荐度徽标（叠加在全局 .tag 上） */
+.rank-rec-strong {
+  background: #e74c3c;
+  color: #fff;
+}
+
+.rank-rec-good {
+  background: #f39c12;
+  color: #fff;
+}
+
+.rank-rec-maybe {
+  background: #f0f2f5;
+  color: #57606f;
+}
+
+.rank-rec-wait {
+  background: #fff;
+  color: #a0a0b0;
+  border: 1rpx solid #d0d3da;
+}
+
+/* 难度标签 */
+.rank-diff-easy {
+  background: #e8f8ef;
+  color: #27ae60;
+}
+
+.rank-diff-medium {
+  background: #fef5e7;
+  color: #f39c12;
+}
+
+.rank-diff-hard {
+  background: #fdecea;
+  color: #e74c3c;
+}
+
+.rank-diff-none {
+  background: #f0f2f5;
+  color: #a0a0b0;
+}
+
+.rank-bk-stats {
+  display: flex;
+  margin-bottom: 16rpx;
+}
+
+.rank-bk-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.rank-bk-stat-num {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.rank-bk-stat-label {
+  font-size: 22rpx;
+  color: #a0a0b0;
+  margin-top: 6rpx;
+}
+
+/* 与你的摇号次数差距（绿=占优，红=不足） */
+.rank-bk-diff {
+  font-size: 20rpx;
+  border-radius: 6rpx;
+  padding: 2rpx 10rpx;
+  margin-top: 6rpx;
+}
+
+.rank-diff-plus {
+  background: #e8f8ef;
+  color: #27ae60;
+}
+
+.rank-diff-minus {
+  background: #fdecea;
+  color: #e74c3c;
+}
+
+.rank-bk-brands {
+  margin-bottom: 16rpx;
+}
+
+.rank-bk-brands-label {
+  display: block;
+  font-size: 24rpx;
+  color: #57606f;
+  margin-bottom: 10rpx;
+}
+
+.rank-bk-chips {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.rank-chip {
+  background: #f0f2f5;
+  color: #57606f;
+  font-size: 22rpx;
+  border-radius: 8rpx;
+  padding: 6rpx 16rpx;
+  margin: 0 12rpx 12rpx 0;
+}
+
+.rank-bk-top5-title {
+  font-size: 24rpx;
+  color: #57606f;
+  margin-bottom: 8rpx;
+}
+
+/* ---------- 车辆行（top5 / 期次趋势共用） ---------- */
+.rank-car-row {
+  display: flex;
+  align-items: center;
+  padding: 14rpx 0;
+  border-bottom: 1rpx solid #f5f6fa;
+}
+
+.rank-car-row:last-child {
+  border-bottom: none;
+}
+
+.rank-car-name {
+  flex: 1;
+  font-size: 26rpx;
+  color: #2c3e50;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 12rpx;
+}
+
+.rank-car-times {
+  font-size: 22rpx;
+  color: #57606f;
+  background: #f0f2f5;
+  border-radius: 6rpx;
+  padding: 2rpx 10rpx;
+  margin-right: 12rpx;
+  flex-shrink: 0;
+}
+
+.rank-car-price {
+  font-size: 26rpx;
+  color: #e74c3c;
+  font-weight: 600;
+  margin-right: 12rpx;
+}
+
+.rank-car-zcid {
+  font-size: 22rpx;
+  color: #a0a0b0;
+  margin-right: 8rpx;
+}
+
+.rank-car-arrow {
+  font-size: 30rpx;
+  color: #a0a0b0;
+}
+
+/* ---------- 期次趋势 ---------- */
+.rank-trend-row {
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #f5f6fa;
+}
+
+.rank-trend-row:last-child {
+  border-bottom: none;
+}
+
+.rank-trend-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.rank-trend-zcid {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.rank-trend-meta {
+  font-size: 22rpx;
+  color: #a0a0b0;
+}
+
+.rank-trend-car {
+  display: flex;
+  align-items: center;
+  font-size: 24rpx;
+  color: #57606f;
+}
+
+.rank-trend-car-label {
+  color: #a0a0b0;
+}
+
+.rank-trend-car-name {
+  flex: 1;
+  color: #2c3e50;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0 8rpx;
+}
+
+.rank-trend-car-price {
+  color: #e74c3c;
+  margin-right: 8rpx;
+}
+/* 结果分享按钮 */
+.rank-share-btn {
+  margin: 24rpx auto 0;
+  width: 320rpx;
+  background: #fff;
+  color: #57606f;
+  font-size: 26rpx;
+  border: 1rpx solid #d0d3da;
+  border-radius: 999rpx;
+  line-height: 2.2;
+}
+
+.rank-share-btn::after {
+  border: none;
+}
+
+/* ---------- 综合建议条 ---------- */
+.rank-advice {
+  display: flex;
+  align-items: flex-start;
+  background: #fdecea;
+  border-left: 6rpx solid #e74c3c;
+  border-radius: 12rpx;
+  padding: 18rpx 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.rank-advice-label {
+  flex-shrink: 0;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #e74c3c;
+  margin-right: 14rpx;
+}
+
+.rank-advice-text {
+  flex: 1;
+  font-size: 24rpx;
+  color: #2c3e50;
+  line-height: 1.7;
+}

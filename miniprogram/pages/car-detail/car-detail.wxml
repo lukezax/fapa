@@ -1,0 +1,99 @@
+<view class="container">
+  <!-- car_link 缺失 -->
+  <view wx:if="{{!car}}" class="empty">车辆不存在或已下架</view>
+
+  <block wx:else>
+    <!-- 顶部：车名 + tags + 收藏 -->
+    <view class="card detail-head">
+      <view class="head-row">
+        <view class="head-main">
+          <view class="car-name">{{car.car_name}}</view>
+          <view class="head-tags">
+            <text class="tag tag-hot">{{car.brand}}</text>
+            <text class="tag">{{display.periodText}}</text>
+          </view>
+        </view>
+        <view class="head-actions">
+          <button class="detail-share-btn" open-type="share">分享</button>
+          <view class="fav-btn {{isFavorite ? 'fav-on' : ''}}" bindtap="onFavoriteTap">
+            <text>{{isFavorite ? '♥' : '♡'}}</text>
+          </view>
+        </view>
+      </view>
+      <view wx:if="{{car.source === 'winner_only'}}" class="winner-tip">该车仅有成交记录，无详细车况</view>
+    </view>
+
+    <!-- 价格卡片 -->
+    <view class="card price-card">
+      <view class="price-row">
+        <view class="price-item">
+          <view class="price-label">起拍价</view>
+          <view class="price-value">{{display.startText}}</view>
+        </view>
+        <view class="price-item">
+          <view class="price-label">成交价</view>
+          <view class="price-value price-final">{{display.finalText}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 成交信息（winners 联表，历史期次车的主要信息来源） -->
+    <view class="card" wx:if="{{display.winner}}">
+      <view class="card-title">成交信息</view>
+      <view class="info-row"><text class="info-label">成交者参与次数</text><text class="info-value">{{display.winnerTimesText}}</text></view>
+      <view class="info-row"><text class="info-label">当时排名</text><text class="info-value">{{display.winnerRankText}}</text></view>
+      <view class="info-row"><text class="info-label">成交者注册时间</text><text class="info-value">{{display.winnerRegText}}</text></view>
+      <view class="info-row"><text class="info-label">成交期次</text><text class="info-value">{{display.winnerZcidText}}</text></view>
+    </view>
+
+    <!-- 证件 -->
+    <view class="card" wx:if="{{display.hasDocs}}">
+      <view class="card-title">证件</view>
+      <view class="info-row"><text class="info-label">行驶证</text><text class="info-value">{{display.licenseText}}</text></view>
+      <view class="info-row"><text class="info-label">登记证</text><text class="info-value">{{display.registrationText}}</text></view>
+      <view class="info-row"><text class="info-label">车牌</text><text class="info-value">{{display.plateText}}</text></view>
+      <view class="info-row"><text class="info-label">钥匙</text><text class="info-value">{{display.keyText}}</text></view>
+    </view>
+
+    <!-- 基本 -->
+    <view class="card" wx:if="{{display.hasBasic}}">
+      <view class="card-title">基本</view>
+      <view class="info-row"><text class="info-label">使用性质</text><text class="info-value">{{display.useTypeText}}</text></view>
+      <view class="info-row"><text class="info-label">燃料</text><text class="info-value">{{display.fuelText}}</text></view>
+      <view class="info-row"><text class="info-label">排放</text><text class="info-value">{{display.emissionText}}</text></view>
+      <view class="info-row"><text class="info-label">车辆型号</text><text class="info-value">{{display.modelText}}</text></view>
+      <view class="info-row"><text class="info-label">初次登记</text><text class="info-value">{{display.firstRegText}}</text></view>
+      <view class="info-row"><text class="info-label">年检到期</text><text class="info-value">{{display.inspectionText}}</text></view>
+      <view class="info-row"><text class="info-label">里程</text><text class="info-value">{{display.mileageText}}</text></view>
+    </view>
+
+    <!-- 违章 -->
+    <view class="card" wx:if="{{display.hasViolation}}">
+      <view class="card-title">违章</view>
+      <view class="info-row"><text class="info-label">违章情况</text><text class="info-value">{{display.violationText}}</text></view>
+    </view>
+
+    <!-- 费用 -->
+    <view class="card" wx:if="{{display.hasFees}}">
+      <view class="card-title">费用</view>
+      <view class="info-row"><text class="info-label">停车费</text><text class="info-value">{{display.parkingText}}</text></view>
+      <view class="info-row"><text class="info-label">维修费</text><text class="info-value">{{display.repairText}}</text></view>
+      <view class="info-row"><text class="info-label">额外费用</text><text class="info-value">{{display.extraFeeText}}</text></view>
+      <view class="info-row"><text class="info-label">保证金</text><text class="info-value">{{display.depositText}}</text></view>
+    </view>
+
+    <!-- 其他 -->
+    <view class="card">
+      <view class="card-title">其他</view>
+      <view class="info-row"><text class="info-label">法院</text><text class="info-value">{{display.courtText}}</text></view>
+      <view class="info-row"><text class="info-label">期次</text><text class="info-value">{{display.periodText}}</text></view>
+      <view class="info-row"><text class="info-label">编号</text><text class="info-value">{{display.itemNoText}}</text></view>
+      <view class="info-row"><text class="info-label">看车地点</text><text class="info-value">{{display.previewText}}</text></view>
+    </view>
+
+    <!-- 底部 Banner -->
+    <view wx:if="{{bannerUnit}}" class="ad-container">
+      <ad unit-id="{{bannerUnit}}" binderror="onBannerError"></ad>
+    </view>
+  </block>
+</view>

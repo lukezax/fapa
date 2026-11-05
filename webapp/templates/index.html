@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>京牌竞拍分析</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f5f6fa; color: #2c3e50; line-height: 1.6;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+
+  h1 { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+  .subtitle { color: #888; font-size: 13px; margin-bottom: 24px; }
+
+  /* ── Card ── */
+  .card {
+    background: #fff; border-radius: 10px; padding: 20px 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px;
+  }
+
+  /* ── Form ── */
+  .form-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; }
+  .form-group { flex: 1; min-width: 160px; }
+  .form-group label { display: block; font-size: 12px; font-weight: 500; color: #666; margin-bottom: 4px; }
+  .form-group input, .form-group select {
+    width: 100%; padding: 8px 10px; border: 1px solid #d0d5dd;
+    border-radius: 6px; font-size: 14px; outline: none; transition: border .15s;
+  }
+  .form-group input:focus, .form-group select:focus {
+    border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,.15);
+  }
+  .btn {
+    padding: 8px 28px; background: #2563eb; color: #fff; border: none;
+    border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer;
+    transition: background .15s; white-space: nowrap; height: 36px;
+  }
+  .btn:hover { background: #1d4ed8; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* ── Loading ── */
+  .spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid #fff; border-top-color: transparent;
+    border-radius: 50%; animation: spin .6s linear infinite;
+    vertical-align: middle; margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Section title ── */
+  .section-title {
+    font-size: 15px; font-weight: 600; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title .badge {
+    font-size: 11px; font-weight: 400; background: #f0f0f0;
+    padding: 2px 8px; border-radius: 4px; color: #666;
+  }
+
+  /* ── Error ── */
+  .error-banner {
+    background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;
+    border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px;
+  }
+
+  /* ══════════════════════════════════════════════
+     Section ①: Hero
+     ══════════════════════════════════════════════ */
+  .hero-card {
+    text-align: center; padding: 28px 24px;
+  }
+  .hero-rank {
+    font-size: 36px; font-weight: 700; color: #2c3e50;
+  }
+  .hero-rank small {
+    font-size: 18px; font-weight: 400; color: #888;
+  }
+  .hero-pct {
+    font-size: 28px; font-weight: 700; color: #2563eb; margin-top: 4px;
+  }
+  .hero-matches {
+    font-size: 14px; color: #555; margin-top: 6px;
+  }
+  .hero-min-price {
+    font-size: 15px; color: #2c3e50; margin-top: 10px;
+  }
+  .hero-min-price strong {
+    font-size: 20px; color: #059669; font-weight: 700;
+  }
+  .hero-hint {
+    font-size: 12px; color: #999; margin-top: 10px; line-height: 1.5;
+  }
+
+  /* ══════════════════════════════════════════════
+     Section ②: Panorama Bar Chart
+     ══════════════════════════════════════════════ */
+  .panorama-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 6px; cursor: pointer;
+    transition: background .15s; margin-bottom: 4px;
+  }
+  .panorama-row:hover { background: #f0f4ff; }
+  .panorama-row.top-row { background: #fefce8; }
+  .panorama-row.top-row:hover { background: #fef9c3; }
+
+  .panorama-label {
+    width: 72px; font-size: 13px; font-weight: 500; flex-shrink: 0;
+    text-align: right;
+  }
+  .panorama-bar-wrap {
+    flex: 1; height: 24px; background: #f0f0f0; border-radius: 12px;
+    overflow: hidden; position: relative;
+  }
+  .panorama-bar {
+    height: 100%; border-radius: 12px; transition: width .4s ease;
+    min-width: 4px;
+  }
+  .panorama-bar.bar-green { background: #059669; }
+  .panorama-bar.bar-blue  { background: #2563eb; }
+  .panorama-bar.bar-orange { background: #d97706; }
+
+  .panorama-pct {
+    width: 48px; font-size: 13px; font-weight: 600; text-align: right; flex-shrink: 0;
+  }
+  .panorama-count {
+    width: 60px; font-size: 11px; color: #888; text-align: right; flex-shrink: 0;
+  }
+  .panorama-star {
+    color: #eab308; font-size: 16px; margin-right: 2px;
+  }
+
+  /* ══════════════════════════════════════════════
+     Section ③: Bracket Detail Cards
+     ══════════════════════════════════════════════ */
+  .filter-bar {
+    display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+    padding: 12px 0; border-bottom: 1px solid #eee; margin-bottom: 16px;
+  }
+  .filter-bar label { font-size: 12px; color: #666; font-weight: 500; }
+  .filter-bar select {
+    padding: 6px 10px; border: 1px solid #d0d5dd; border-radius: 6px;
+    font-size: 13px; outline: none;
+  }
+
+  .detail-card {
+    border: 1px solid #e5e7eb; border-radius: 10px;
+    border-left: 4px solid #2563eb;
+    padding: 16px 20px; margin-bottom: 12px; background: #fff;
+    transition: box-shadow .15s;
+  }
+  .detail-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  .detail-card.border-green { border-left-color: #059669; }
+  .detail-card.border-blue  { border-left-color: #2563eb; }
+  .detail-card.border-orange { border-left-color: #d97706; }
+
+  .detail-header {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .detail-header .medal { font-size: 18px; }
+  .detail-header .bkt-name { font-size: 16px; font-weight: 600; }
+  .detail-header .bkt-pct { font-size: 14px; font-weight: 700; color: #2563eb; }
+  .detail-header .bkt-count { font-size: 13px; color: #666; }
+
+  .diff-badge {
+    display: inline-flex; align-items: center; gap: 2px;
+    font-size: 11px; padding: 2px 8px; border-radius: 10px;
+    font-weight: 500; margin-left: auto;
+  }
+  .diff-badge.easy { background: #ecfdf5; color: #059669; }
+  .diff-badge.mid   { background: #eff6ff; color: #2563eb; }
+  .diff-badge.hard  { background: #fff7ed; color: #d97706; }
+
+  .detail-stats {
+    font-size: 13px; color: #666; margin: 6px 0 10px;
+    display: flex; gap: 16px; flex-wrap: wrap;
+  }
+  .detail-stats strong { color: #2c3e50; }
+
+  /* Top 5 table */
+  .top5-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .top5-table th {
+    text-align: left; padding: 5px 8px; border-bottom: 1px solid #e5e7eb;
+    font-weight: 600; color: #888; font-size: 11px;
+  }
+  .top5-table td { padding: 5px 8px; border-bottom: 1px solid #f0f0f0; }
+  .top5-table tr:hover td { background: #f8f9fc; }
+  .top5-table a { color: #2563eb; text-decoration: none; }
+  .top5-table a:hover { text-decoration: underline; }
+  .top5-table .td-right { text-align: right; }
+
+  /* Expand toggle */
+  .expand-toggle {
+    color: #2563eb; font-size: 12px; cursor: pointer; user-select: none;
+    padding: 6px 0; display: inline-block;
+  }
+  .expand-toggle:hover { text-decoration: underline; }
+
+  .matches-list { display: none; margin-top: 8px; }
+  .matches-list.open { display: block; }
+  .match-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 0 5px 8px; border-bottom: 1px solid #f0f0f0; font-size: 12px;
+  }
+  .match-item:last-child { border-bottom: none; }
+  .match-item a { color: #2563eb; text-decoration: none; }
+  .match-item a:hover { text-decoration: underline; }
+  .match-item .meta { color: #888; font-size: 12px; white-space: nowrap; margin-left: 8px; }
+
+  /* ══════════════════════════════════════════════
+     Section ④: Period Trend Table
+     ══════════════════════════════════════════════ */
+  .trend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .trend-table th {
+    text-align: left; padding: 6px 8px; border-bottom: 2px solid #e5e7eb;
+    font-weight: 600; color: #666; font-size: 11px;
+  }
+  .trend-table td { padding: 5px 8px; border-bottom: 1px solid #f0f0f0; }
+  .trend-table tr:hover td { background: #f8f9fc; }
+  .trend-table a { color: #2563eb; text-decoration: none; }
+  .trend-table a:hover { text-decoration: underline; }
+  .trend-table .td-right { text-align: right; }
+  .trend-table .td-mid { text-align: center; color: #999; }
+
+  /* ══════════════════════════════════════════════
+     Responsive
+     ══════════════════════════════════════════════ */
+  @media (max-width: 640px) {
+    .form-row { flex-direction: column; }
+    .form-group { min-width: 100%; }
+    .hero-rank { font-size: 28px; }
+    .hero-pct { font-size: 22px; }
+    .panorama-label { width: 60px; font-size: 12px; }
+    .panorama-pct { width: 40px; font-size: 12px; }
+    .panorama-count { width: 50px; font-size: 10px; }
+    .detail-stats { flex-direction: column; gap: 4px; }
+    .detail-header { flex-wrap: wrap; }
+    .diff-badge { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="container" id="app">
+  <h1>京牌竞拍分析 <small>v3.0</small></h1>
+  <p class="subtitle">基于 15 期历史数据，对比同排位中拍者分布，找到最适合你的档位
+    <a href="/cars" style="margin-left:12px; font-size:12px; color:#2563eb; text-decoration:none;">车辆详情筛选 &rarr;</a>
+  </p>
+
+  <!-- Form (preserved exactly) -->
+  <div class="card">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="times">摇号次数</label>
+        <input type="number" id="times" min="1" step="1" placeholder="如 85" autofocus>
+      </div>
+      <div class="form-group" style="min-width:400px;">
+        <label for="reg_date">注册时间</label>
+        <div style="display:flex; gap:10px;">
+          <input type="date" id="reg_date" style="flex:1.2;">
+          <input type="time" id="reg_time" style="flex:1.5; min-width:110px;">
+          <input type="number" id="reg_sec" value="0" min="0" max="59" style="flex:0.7; min-width:56px; text-align:center;" placeholder="秒">
+          <input type="text" id="reg_msec" value="000" maxlength="3" style="flex:0.5; min-width:52px; text-align:center;" placeholder="毫秒">
+        </div>
+      </div>
+      <div class="form-group" style="flex:0 0 auto;">
+        <button class="btn" id="calcBtn" onclick="calculate()">测算</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="error" class="error-banner" style="display:none;"></div>
+
+  <div id="result" style="display:none;">
+    <!-- Section ①: Hero -->
+    <div class="card hero-card" id="heroSection"></div>
+
+    <!-- Section ②: Panorama -->
+    <div class="card" id="panoramaSection" style="display:none;">
+      <div class="section-title">价格全景图</div>
+      <p style="font-size:12px; color:#999; margin-bottom:12px;">
+        历史上和你排名差不多的人，最终都花了多少钱买车
+      </p>
+      <div id="panoramaContainer"></div>
+    </div>
+
+    <!-- Section ③: Bracket Detail Cards -->
+    <div class="card" id="detailSection" style="display:none;">
+      <div class="filter-bar">
+        <label>排序</label>
+        <select id="sortSelect" onchange="applyFilters()">
+          <option value="match_pct">按匹配度 ↓</option>
+          <option value="avg_price">按均价 ↓</option>
+        </select>
+        <label style="margin-left:12px;">品牌</label>
+        <select id="brandFilter" onchange="applyFilters()">
+          <option value="">全部品牌</option>
+        </select>
+      </div>
+      <div id="cardsContainer"></div>
+    </div>
+
+    <!-- Section ④: Period Trend Table -->
+    <div class="card" id="trendSection" style="display:none;">
+      <div class="section-title">
+        历史趋势
+        <span class="badge">15 期数据</span>
+      </div>
+      <p style="font-size:12px; color:#999; margin-bottom:12px; line-height:1.6;">
+        以下展示你在每期中的等效排名位置，以及该位置最接近的中拍者实际中了什么车。<br>
+        「你的等效位置」= 按你的排名百分比换算到该期总人数中的排名。
+      </p>
+      <div style="overflow-x:auto;">
+        <table class="trend-table" id="trendTable"></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Data ──
+let resultData = null;
+
+// ── Calculate (preserved) ──
+async function calculate() {
+  const times = document.getElementById('times').value;
+  const reg_date = document.getElementById('reg_date').value;
+  const reg_time = document.getElementById('reg_time').value;
+  const reg_sec = (document.getElementById('reg_sec').value || '0').padStart(2, '0');
+  const reg_msec = (document.getElementById('reg_msec').value || '000').padStart(3, '0');
+  const reg_subsec = `${reg_sec}.${reg_msec}`;
+  const window = 10;
+  const btn = document.getElementById('calcBtn');
+  const errorDiv = document.getElementById('error');
+  const resultDiv = document.getElementById('result');
+
+  errorDiv.style.display = 'none';
+  resultDiv.style.display = 'none';
+
+  if (!times || !reg_date) {
+    errorDiv.textContent = '请填写摇号次数和注册日期';
+    errorDiv.style.display = 'block';
+    return;
+  }
+
+  const reg_full = reg_time
+    ? `${reg_date} ${reg_time}:${reg_subsec}`
+    : `${reg_date} 00:00:${reg_subsec}`;
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 计算中…';
+
+  try {
+    const resp = await fetch('/api/calculate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ times: parseInt(times), reg_time: reg_full, window: parseInt(window) }),
+    });
+    const data = await resp.json();
+    if (data.error) { throw new Error(data.error); }
+    resultData = data;
+    renderAll(data);
+    resultDiv.style.display = 'block';
+  } catch (e) {
+    errorDiv.textContent = '错误: ' + e.message;
+    errorDiv.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '测算';
+  }
+}
+
+// ── Helpers ──
+function fmtNum(n) { return typeof n === 'number' ? n.toLocaleString() : n; }
+
+function fmtPrice(p) {
+  if (!p) return '-';
+  const n = parseFloat(p);
+  if (isNaN(n)) return p;
+  if (n >= 10000) return (n / 10000).toFixed(1) + '万';
+  return n.toFixed(0);
+}
+
+function bracketSortKey(b) {
+  const m = b.match(/(\d+)/);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
+function bracketSlug(b) {
+  return 'card-' + b.replace(/[^\w\u4e00-\u9fff]/g, '');
+}
+
+function barColorClass(pct) {
+  if (pct >= 20) return 'bar-green';
+  if (pct >= 8) return 'bar-blue';
+  return 'bar-orange';
+}
+
+function borderColorClass(pct) {
+  if (pct >= 20) return 'border-green';
+  if (pct >= 8) return 'border-blue';
+  return 'border-orange';
+}
+
+function diffBadgeHtml(rec) {
+  if (rec === '强烈推荐') return '<span class="diff-badge easy">🔥强烈推荐</span>';
+  if (rec === '推荐') return '<span class="diff-badge mid">👍推荐</span>';
+  if (rec === '可考虑') return '<span class="diff-badge hard">💡可考虑</span>';
+  if (rec === '观望') return '<span class="diff-badge">👀观望</span>';
+  return '<span class="diff-badge">—</span>';
+}
+
+function medalHtml(idx) {
+  if (idx === 0) return '<span class="medal">🥇</span>';
+  if (idx === 1) return '<span class="medal">🥈</span>';
+  if (idx === 2) return '<span class="medal">🥉</span>';
+  return '';
+}
+
+// ── Render Orchestrator ──
+function renderAll(data) {
+  renderHero(data);
+  renderPanorama(data.panorama);
+  buildBrandFilter(data.panorama);
+  window._panoramaData = data.panorama;
+  applyFilters();
+  renderTrendTable(data.period_trend);
+  document.getElementById('panoramaSection').style.display = 'block';
+  document.getElementById('detailSection').style.display = 'block';
+  document.getElementById('trendSection').style.display = 'block';
+}
+
+// ═══════════════════════════════════════════════
+// Section ①: Hero
+// ═══════════════════════════════════════════════
+function renderHero(data) {
+  var minPriceHtml = '';
+  if (data.min_final_price) {
+    minPriceHtml = '<div class="hero-min-price">历史最低成功价 <strong>' + fmtPrice(data.min_final_price) + '</strong></div>';
+  }
+  document.getElementById('heroSection').innerHTML =
+    '<div class="hero-rank">#' + fmtNum(data.rank) + ' <small>/ ' + fmtNum(data.total) + '</small></div>' +
+    '<div class="hero-pct">前 ' + data.user_pct + '%</div>' +
+    '<div class="hero-matches">共匹配到 ' + fmtNum(data.total_matches) + ' 辆历史中拍</div>' +
+    minPriceHtml +
+    '<div class="hero-hint">匹配策略: 在历史各期中找到排名百分比前 ' + data.user_pct + '% 附近的中拍者</div>';
+}
+
+// ═══════════════════════════════════════════════
+// Section ②: Panorama Bar Chart
+// ═══════════════════════════════════════════════
+function renderPanorama(panorama) {
+  // Sort by bracket price ascending
+  const sorted = [...panorama].sort(function(a, b) {
+    return bracketSortKey(a.bracket) - bracketSortKey(b.bracket);
+  });
+  // Find max match_pct for bar width scaling
+  var maxPct = 0;
+  for (var i = 0; i < sorted.length; i++) {
+    if (sorted[i].match_pct > maxPct) maxPct = sorted[i].match_pct;
+  }
+
+  var html = '';
+  for (var i = 0; i < sorted.length; i++) {
+    var r = sorted[i];
+    var barWidth = maxPct > 0 ? (r.match_pct / maxPct * 100) : 0;
+    var colorCls = barColorClass(r.match_pct);
+    var isTop = (r.match_pct === maxPct);
+    var starHtml = isTop ? '<span class="panorama-star">★</span> ' : '';
+    var rowCls = 'panorama-row' + (isTop ? ' top-row' : '');
+    var slug = bracketSlug(r.bracket);
+
+    html += '<div class="' + rowCls + '" onclick="scrollToCard(\'' + slug + '\')">' +
+      '<span class="panorama-label">' + starHtml + r.bracket + '</span>' +
+      '<div class="panorama-bar-wrap"><div class="panorama-bar ' + colorCls + '" style="width:' + barWidth.toFixed(1) + '%"></div></div>' +
+      '<span class="panorama-pct">' + r.match_pct + '%</span>' +
+      '<span class="panorama-count">' + r.match_count + '辆</span>' +
+      '</div>';
+  }
+  document.getElementById('panoramaContainer').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════
+// Section ③: Bracket Detail Cards
+// ═══════════════════════════════════════════════
+function buildBrandFilter(panorama) {
+  var brands = {};
+  for (var i = 0; i < panorama.length; i++) {
+    var tb = panorama[i].top_brands;
+    if (tb) {
+      for (var b in tb) {
+        if (tb.hasOwnProperty(b)) brands[b] = true;
+      }
+    }
+  }
+  var keys = Object.keys(brands).sort();
+  var html = '<option value="">全部品牌</option>';
+  for (var j = 0; j < keys.length; j++) {
+    html += '<option value="' + keys[j] + '">' + keys[j] + '</option>';
+  }
+  document.getElementById('brandFilter').innerHTML = html;
+}
+
+function applyFilters() {
+  var sortBy = document.getElementById('sortSelect').value;
+  var brandFilter = document.getElementById('brandFilter').value;
+  var items = (window._panoramaData || []).slice();
+
+  // Filter by brand
+  if (brandFilter) {
+    items = items.filter(function(r) {
+      return r.top_brands && r.top_brands[brandFilter] > 0;
+    });
+  }
+
+  // Sort
+  var sortMap = {
+    'match_pct': function(r) { return -r.match_pct; },
+    'avg_price': function(r) { return -r.avg_final_price; },
+  };
+  items.sort(function(a, b) {
+    var fa = sortMap[sortBy](a), fb = sortMap[sortBy](b);
+    return fa < fb ? -1 : fa > fb ? 1 : 0;
+  });
+
+  var html = '';
+  for (var i = 0; i < items.length; i++) {
+    html += renderCard(items[i], i);
+  }
+  document.getElementById('cardsContainer').innerHTML = html;
+}
+
+function renderCard(r, idx) {
+  var borderCls = borderColorClass(r.match_pct);
+  var medal = medalHtml(idx);
+  var diffHtml = diffBadgeHtml(r.recommendation);
+
+  // Top 5 table
+  var top5Html = '';
+  var top5Keys = {};
+  if (r.top5 && r.top5.length > 0) {
+    top5Html = '<table class="top5-table"><thead><tr><th style="width:24px;">#</th><th>车型</th><th style="text-align:right;">成交价</th><th style="text-align:right; width:72px;">排位</th><th style="width:56px;">期次</th></tr></thead><tbody>';
+    for (var i = 0; i < r.top5.length; i++) {
+      var m = r.top5[i];
+      top5Keys[m.car_name + '|' + m.result_zcid] = true;
+      top5Html += '<tr>' +
+        '<td>' + (i + 1) + '</td>' +
+        '<td><a href="' + m.car_link + '" target="_blank" rel="noopener">' + m.car_name + '</a></td>' +
+        '<td class="td-right">' + fmtPrice(m.final_price) + '</td>' +
+        '<td class="td-right">前' + m.winner_pct + '%</td>' +
+        '<td>' + m.result_zcid + '期</td>' +
+        '</tr>';
+    }
+    top5Html += '</tbody></table>';
+  }
+
+  // Remaining matches (exclude top5)
+  var matchId = 'matches-' + idx;
+  var matchesHtml = '';
+  var remaining = [];
+  if (r.all_matches) {
+    for (var k = 0; k < r.all_matches.length; k++) {
+      var am = r.all_matches[k];
+      var key = am.car_name + '|' + am.result_zcid;
+      if (!top5Keys[key]) remaining.push(am);
+    }
+  }
+  if (remaining.length > 0) {
+    matchesHtml += '<div class="expand-toggle" onclick="toggleMatches(\'' + matchId + '\')">展开查看其余 ' + remaining.length + ' 辆 →</div>' +
+      '<div class="matches-list" id="' + matchId + '">';
+    for (var j = 0; j < remaining.length; j++) {
+      var am = remaining[j];
+      matchesHtml += '<div class="match-item">' +
+        '<span><a href="' + am.car_link + '" target="_blank" rel="noopener">' + am.car_name + '</a></span>' +
+        '<span class="meta">' + fmtPrice(am.final_price) + ' · 前' + am.winner_pct + '% · ' + am.result_zcid + '期</span>' +
+        '</div>';
+    }
+    matchesHtml += '</div>';
+  }
+
+  var cardId = bracketSlug(r.bracket);
+
+  return '<div class="detail-card ' + borderCls + '" id="' + cardId + '">' +
+    '<div class="detail-header">' +
+      medal +
+      '<span class="bkt-name">' + r.bracket + '</span>' +
+      '<span class="bkt-pct">' + r.match_pct + '%</span>' +
+      '<span class="bkt-count">' + r.match_count + '辆</span>' +
+      diffHtml +
+    '</div>' +
+    '<div class="detail-stats">' +
+      '<span>均价 <strong>' + fmtPrice(r.avg_final_price) + '</strong></span>' +
+      '<span>15期中有 <strong>' + r.periods_covered + ' 期</strong>在此档位成交</span>' +
+    '</div>' +
+    top5Html +
+    matchesHtml +
+    '</div>';
+}
+
+function toggleMatches(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.classList.toggle('open');
+  // Update toggle text
+  var toggle = el.previousElementSibling;
+  if (toggle && toggle.classList.contains('expand-toggle')) {
+    if (el.classList.contains('open')) {
+      toggle.textContent = '收起 ↑';
+    } else {
+      var count = el.children.length;
+      toggle.textContent = '展开查看全部 ' + count + ' 辆 →';
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════
+// Section ④: Period Trend Table
+// ═══════════════════════════════════════════════
+function renderTrendTable(trends) {
+  if (!trends || trends.length === 0) {
+    document.getElementById('trendTable').innerHTML = '';
+    return;
+  }
+
+  var html = '<thead><tr><th>期次</th><th style="text-align:right;">参与人数</th><th style="text-align:right;">中拍车辆数</th><th style="text-align:right;">你的等效位置</th><th>中拍车型</th><th style="text-align:right;">成交价</th></tr></thead><tbody>';
+
+  for (var i = 0; i < trends.length; i++) {
+    var t = trends[i];
+    var carName, carLink, price;
+    if (t.matched_car) {
+      carName = t.matched_car.car_name;
+      carLink = t.matched_car.car_link;
+      price = fmtPrice(t.matched_car.final_price);
+    } else {
+      carName = null;
+      carLink = null;
+      price = null;
+    }
+
+    html += '<tr>' +
+      '<td><strong>' + t.zcid + '期</strong></td>' +
+      '<td class="td-right">' + fmtNum(t.total_bidders) + '</td>' +
+      '<td class="td-right">' + fmtNum(t.winner_count || 0) + '</td>' +
+      '<td class="td-right">#' + fmtNum(t.user_equiv_rank) + '</td>' +
+      '<td>' + (carName ? '<a href="' + carLink + '" target="_blank" rel="noopener">' + carName + '</a>' : '<span class="td-mid">—</span>') + '</td>' +
+      '<td class="td-right">' + (price || '<span class="td-mid">—</span>') + '</td>' +
+      '</tr>';
+  }
+  html += '</tbody>';
+
+  document.getElementById('trendTable').innerHTML = html;
+}
+
+// ── Navigation ──
+function scrollToCard(slug) {
+  var el = document.getElementById(slug);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ── Enter key ──
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') calculate();
+});
+</script>
+</body>
+</html>

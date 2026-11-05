@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>车辆详情筛选 - 京牌竞拍分析</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f5f6fa; color: #2c3e50; line-height: 1.6;
+  }
+  .container { max-width: 98vw; margin: 0 auto; padding: 24px 16px; }
+
+  /* ── Breadcrumb ── */
+  .breadcrumb {
+    font-size: 13px; color: #888; margin-bottom: 4px;
+  }
+  .breadcrumb a { color: #2563eb; text-decoration: none; }
+  .breadcrumb a:hover { text-decoration: underline; }
+  .breadcrumb .sep { color: #ccc; margin: 0 6px; }
+
+  h1 { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+  .subtitle { color: #888; font-size: 13px; margin-bottom: 24px; }
+
+  .back-link {
+    display: inline-block; margin-bottom: 16px;
+    font-size: 13px; color: #2563eb; text-decoration: none;
+  }
+  .back-link:hover { text-decoration: underline; }
+
+  /* ── Card ── */
+  .card {
+    background: #fff; border-radius: 10px; padding: 20px 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px;
+  }
+
+  /* ── Form ── */
+  .form-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; }
+  .form-row + .form-row { margin-top: 12px; }
+  .form-group { flex: 1; min-width: 130px; }
+  .form-group.small { flex: 0 0 auto; min-width: 0; }
+  .form-group label {
+    display: block; font-size: 12px; font-weight: 500; color: #666; margin-bottom: 4px;
+  }
+  .form-group input, .form-group select {
+    width: 100%; padding: 8px 10px; border: 1px solid #d0d5dd;
+    border-radius: 6px; font-size: 14px; outline: none; transition: border .15s;
+  }
+  .form-group input:focus, .form-group select:focus {
+    border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,.15);
+  }
+  .range-group { display: flex; align-items: center; gap: 6px; }
+  .range-group input { flex: 1; min-width: 0; }
+  .range-group .sep { color: #999; font-size: 13px; }
+
+  .btn {
+    padding: 8px 28px; background: #2563eb; color: #fff; border: none;
+    border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer;
+    transition: background .15s; white-space: nowrap; height: 36px;
+  }
+  .btn:hover { background: #1d4ed8; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-reset {
+    background: #fff; color: #666; border: 1px solid #d0d5dd;
+  }
+  .btn-reset:hover { background: #f5f5f5; color: #333; }
+  .btn-wrap { display: flex; gap: 8px; align-items: flex-end; }
+
+  /* ── Loading / Spinner ── */
+  .spinner-wrap { text-align: center; padding: 40px 0; }
+  .spinner {
+    display: inline-block; width: 24px; height: 24px;
+    border: 3px solid #e0e0e0; border-top-color: #2563eb;
+    border-radius: 50%; animation: spin .6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Results header ── */
+  .result-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px; flex-wrap: wrap; gap: 8px;
+  }
+  .result-count {
+    font-size: 15px; font-weight: 600;
+  }
+  .result-count strong { color: #2563eb; }
+
+  /* ── Table ── */
+  .table-wrap { overflow-x: auto; }
+  .cars-table {
+    width: 100%; border-collapse: collapse; font-size: 12px;
+    white-space: nowrap;
+  }
+  .cars-table thead th {
+    position: sticky; top: 0; z-index: 1;
+    text-align: left; padding: 8px 10px;
+    border-bottom: 2px solid #e5e7eb;
+    font-weight: 600; color: #666; font-size: 11px;
+    background: #fafafa; user-select: none;
+    cursor: pointer; white-space: nowrap;
+  }
+  .cars-table thead th:hover { color: #2563eb; }
+  .cars-table thead th .sort-arrow {
+    display: inline-block; margin-left: 3px; color: #bbb; font-size: 10px;
+  }
+  .cars-table thead th .sort-arrow.active { color: #2563eb; }
+  .cars-table thead th.sorted { color: #2563eb; }
+
+  .cars-table td {
+    padding: 7px 10px; border-bottom: 1px solid #f0f0f0;
+    max-width: 200px; overflow: hidden; text-overflow: ellipsis;
+  }
+  .cars-table tbody tr:nth-child(even) td { background: #fafbfc; }
+  .cars-table tbody tr:hover td { background: #f0f4ff; }
+
+  .cars-table .td-right { text-align: right; }
+  .cars-table .td-link { color: #2563eb; text-decoration: none; }
+  .cars-table .td-link:hover { text-decoration: underline; }
+  .cars-table .td-docs { font-size: 11px; }
+  .cars-table .td-docs .yes { color: #059669; }
+  .cars-table .td-docs .no { color: #dc2626; }
+
+  .cars-table .td-muted { color: #999; }
+  .cars-table .td-violation { font-size: 11px; }
+
+  /* ── Truncate with tooltip ── */
+  .truncate {
+    max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    display: inline-block; vertical-align: middle;
+  }
+
+  /* ── Empty ── */
+  .empty-state {
+    text-align: center; padding: 48px 24px; color: #999;
+  }
+  .empty-state .icon { font-size: 36px; color: #ddd; margin-bottom: 8px; }
+  .empty-state p { font-size: 14px; }
+
+  /* ── Multi-select dropdown ── */
+  .multi-select {
+    position: relative;
+  }
+  .multi-select-trigger {
+    width: 100%; padding: 7px 10px; border: 1px solid #d0d5dd;
+    border-radius: 6px; font-size: 13px; cursor: pointer;
+    background: #fff; text-align: left; display: flex;
+    justify-content: space-between; align-items: center;
+    min-height: 36px; transition: border .15s;
+  }
+  .multi-select-trigger:hover { border-color: #2563eb; }
+  .multi-select-trigger .arrow { color: #999; font-size: 10px; }
+  .multi-select-trigger .placeholder { color: #999; }
+  .multi-select-trigger .selected-tags {
+    display: flex; gap: 4px; flex-wrap: wrap; flex: 1;
+  }
+  .multi-select-trigger .sel-tag {
+    background: #eff6ff; color: #2563eb; font-size: 11px;
+    padding: 1px 6px; border-radius: 3px; white-space: nowrap;
+  }
+  .multi-select-dropdown {
+    display: none; position: absolute; top: 100%; left: 0; right: 0;
+    background: #fff; border: 1px solid #d0d5dd; border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.1); z-index: 10;
+    max-height: 240px; overflow-y: auto; margin-top: 2px;
+  }
+  .multi-select-dropdown.open { display: block; }
+  .multi-select-dropdown label {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 10px; font-size: 13px; font-weight: 400;
+    color: #333; cursor: pointer; margin-bottom: 0;
+    transition: background .1s;
+  }
+  .multi-select-dropdown label:hover { background: #f0f4ff; }
+  .multi-select-dropdown input[type="checkbox"] {
+    width: auto; padding: 0; border: none; border-radius: 0;
+    accent-color: #2563eb; flex-shrink: 0;
+  }
+  .multi-select-dropdown input[type="checkbox"]:focus {
+    box-shadow: none;
+  }
+
+  /* ── Sort badge ── */
+  .sort-badge {
+    display: inline-block; font-size: 9px; font-weight: 700;
+    background: #2563eb; color: #fff; border-radius: 50%;
+    width: 14px; height: 14px; line-height: 14px; text-align: center;
+    margin-left: 2px; vertical-align: middle;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .form-row { flex-direction: column; }
+    .form-group { min-width: 100%; }
+    .form-group.small { min-width: 100%; }
+    .btn-wrap { width: 100%; }
+    .btn-wrap .btn { flex: 1; }
+    .range-group { flex-wrap: nowrap; }
+    .cars-table { font-size: 11px; }
+    .cars-table td, .cars-table th { padding: 6px 6px; }
+  }
+</style>
+</head>
+<body>
+<div class="container" id="app">
+  <p class="breadcrumb">
+    <a href="/">京牌竞拍分析</a><span class="sep">></span><span>车辆详情筛选</span>
+  </p>
+  <a href="/" class="back-link">&larr; 返回主页</a>
+
+  <!-- Filter Panel -->
+  <div class="card">
+    <div class="form-row">
+      <div class="form-group">
+        <label>品牌</label>
+        <div class="multi-select" id="ms-brand" data-field="brand">
+          <div class="multi-select-trigger" onclick="toggleMultiSelect('ms-brand')">
+            <span class="selected-tags"><span class="placeholder">全部</span></span>
+            <span class="arrow">&#9660;</span>
+          </div>
+          <div class="multi-select-dropdown"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>法院</label>
+        <div class="multi-select" id="ms-court" data-field="court">
+          <div class="multi-select-trigger" onclick="toggleMultiSelect('ms-court')">
+            <span class="selected-tags"><span class="placeholder">全部</span></span>
+            <span class="arrow">&#9660;</span>
+          </div>
+          <div class="multi-select-dropdown"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>燃料</label>
+        <div class="multi-select" id="ms-fuel" data-field="fuel_type">
+          <div class="multi-select-trigger" onclick="toggleMultiSelect('ms-fuel')">
+            <span class="selected-tags"><span class="placeholder">全部</span></span>
+            <span class="arrow">&#9660;</span>
+          </div>
+          <div class="multi-select-dropdown"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>排放标准</label>
+        <div class="multi-select" id="ms-emission" data-field="emission">
+          <div class="multi-select-trigger" onclick="toggleMultiSelect('ms-emission')">
+            <span class="selected-tags"><span class="placeholder">全部</span></span>
+            <span class="arrow">&#9660;</span>
+          </div>
+          <div class="multi-select-dropdown"></div>
+        </div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="f-license">行驶证</label>
+        <select id="f-license">
+          <option value="">全部</option>
+          <option value="有">有</option>
+          <option value="无">无</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="f-registration">登记证</label>
+        <select id="f-registration">
+          <option value="">全部</option>
+          <option value="有">有</option>
+          <option value="无">无</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="f-plate">车牌</label>
+        <select id="f-plate">
+          <option value="">全部</option>
+          <option value="有">有</option>
+          <option value="无">无</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="f-key">钥匙</label>
+        <select id="f-key">
+          <option value="">全部</option>
+          <option value="有">有</option>
+          <option value="无">无</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="f-mortgaged">抵押</label>
+        <select id="f-mortgaged">
+          <option value="">全部</option>
+          <option value="是">是</option>
+          <option value="否">否</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>成交价(指导价)范围 (元)</label>
+        <div class="range-group">
+          <input type="number" id="f-final-price-min" min="0" step="1000" placeholder="最小">
+          <span class="sep">~</span>
+          <input type="number" id="f-final-price-max" min="0" step="1000" placeholder="最大">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>违章数范围</label>
+        <div class="range-group">
+          <input type="number" id="f-violation-min" min="0" step="1" placeholder="最少">
+          <span class="sep">~</span>
+          <input type="number" id="f-violation-max" min="0" step="1" placeholder="最多">
+        </div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="f-parking-max">停车费上限 (元)</label>
+        <input type="number" id="f-parking-max" min="0" step="100" placeholder="如 10000">
+      </div>
+      <div class="form-group">
+        <label for="f-repair-max">维修费上限 (元)</label>
+        <input type="number" id="f-repair-max" min="0" step="100" placeholder="如 10000">
+      </div>
+      <div class="form-group">
+        <label for="f-extra-fee-max">额外费用上限 (元)</label>
+        <input type="number" id="f-extra-fee-max" min="0" step="100" placeholder="如 20000">
+      </div>
+      <div class="form-group">
+        <label for="f-mileage-max">里程上限 (公里)</label>
+        <input type="number" id="f-mileage-max" min="0" step="1000" placeholder="如 100000">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="f-deposit-max">保证金上限 (元)</label>
+        <input type="number" id="f-deposit-max" min="0" step="1000" placeholder="如 200000">
+      </div>
+      <div class="form-group small">
+        <div class="btn-wrap">
+          <button class="btn" id="filterBtn" onclick="applyFilter()">筛选</button>
+          <button class="btn btn-reset" onclick="resetFilter()">重置</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="card">
+    <div class="result-header">
+      <div class="result-count" id="resultCount">共 <strong>0</strong> 辆车</div>
+      <div style="font-size:12px; color:#999;">点击表头排序（可多选）</div>
+    </div>
+    <div id="loading" class="spinner-wrap">
+      <div class="spinner"></div>
+    </div>
+    <div class="table-wrap" id="tableWrap" style="display:none;">
+      <table class="cars-table" id="carsTable"></table>
+    </div>
+    <div id="emptyState" class="empty-state" style="display:none;">
+      <p>没有符合条件的车辆</p>
+      <p style="font-size:12px; margin-top:4px;">请调整筛选条件后重试</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──
+let sortState = [{ key: 'final_price', dir: 'asc' }];
+let multiSelectValues = { 'ms-brand': [], 'ms-court': [], 'ms-fuel': [], 'ms-emission': [] };
+
+// ── Format helpers ──
+function fmtNum(n) {
+  if (n === null || n === undefined || n === '') return '-';
+  const v = parseFloat(n);
+  if (isNaN(v)) return n;
+  return v.toLocaleString();
+}
+
+function fmtPrice(p) {
+  if (p === null || p === undefined || p === '') return '-';
+  const n = parseFloat(p);
+  if (isNaN(n)) return '-';
+  if (n >= 10000) return (n / 10000).toFixed(1) + '万';
+  return n.toFixed(0);
+}
+
+function fmtYesNo(v) {
+  return v === '有' || v === '是' ? '有' : '无';
+}
+
+function fmtDocs(c) {
+  var parts = [];
+  parts.push(c.has_license === '有' ? '有' : '无');
+  parts.push(c.has_registration === '有' ? '有' : '无');
+  parts.push(c.has_plate === '有' ? '有' : '无');
+  return parts.join('/');
+}
+
+function fmtViolation(c) {
+  var count = parseInt(c.violation_count) || 0;
+  var pts = parseInt(c.violation_points) || 0;
+  var fine = parseFloat(c.violation_fine) || 0;
+  return count + '起' + pts + '分' + fmtNum(fine) + '元';
+}
+
+function truncate(str, len) {
+  if (!str) return '';
+  return str.length > len ? str.substring(0, len) + '...' : str;
+}
+
+// ── API ──
+async function fetchCars() {
+  var loading = document.getElementById('loading');
+  var tableWrap = document.getElementById('tableWrap');
+  var emptyState = document.getElementById('emptyState');
+  var resultCount = document.getElementById('resultCount');
+
+  loading.style.display = 'block';
+  tableWrap.style.display = 'none';
+  emptyState.style.display = 'none';
+
+  // Build query
+  var params = [];
+  var sortKeys = sortState.map(function(s) { return s.key; }).join(',');
+  var sortDirs = sortState.map(function(s) { return s.dir; }).join(',');
+  if (sortKeys) {
+    params.push('sort=' + encodeURIComponent(sortKeys));
+    params.push('dir=' + encodeURIComponent(sortDirs));
+  }
+
+  // Multi-select values
+  for (var msId in multiSelectValues) {
+    var vals = multiSelectValues[msId];
+    if (vals && vals.length > 0) {
+      var field = document.getElementById(msId).getAttribute('data-field');
+      params.push(field + '=' + encodeURIComponent(vals.join(',')));
+    }
+  }
+
+  var fieldMap = {
+    'f-license': 'has_license',
+    'f-registration': 'has_registration',
+    'f-plate': 'has_plate',
+    'f-key': 'has_key',
+    'f-mortgaged': 'is_mortgaged',
+    'f-final-price-min': 'final_price_min',
+    'f-final-price-max': 'final_price_max',
+    'f-violation-min': 'violation_min',
+    'f-violation-max': 'violation_max',
+    'f-parking-max': 'parking_max',
+    'f-repair-max': 'repair_max',
+    'f-deposit-max': 'deposit_max',
+    'f-extra-fee-max': 'extra_fee_max',
+    'f-mileage-max': 'mileage_max',
+  };
+
+  for (var elId in fieldMap) {
+    var el = document.getElementById(elId);
+    if (el && el.value) {
+      params.push(fieldMap[elId] + '=' + encodeURIComponent(el.value));
+    }
+  }
+
+  try {
+    var resp = await fetch('/api/cars?' + params.join('&'));
+    var data = await resp.json();
+
+    // Populate filter options on first load
+    if (data.options) {
+      populateMultiSelect('ms-brand', data.options.brands);
+      populateMultiSelect('ms-court', data.options.courts);
+      populateMultiSelect('ms-fuel', data.options.fuel_types);
+      populateMultiSelect('ms-emission', data.options.emissions);
+    }
+
+    renderTable(data);
+  } catch (e) {
+    loading.style.display = 'none';
+    emptyState.style.display = 'block';
+    emptyState.innerHTML = '<p>加载失败: ' + e.message + '</p>';
+  }
+}
+
+function populateMultiSelect(msId, items) {
+  var container = document.getElementById(msId);
+  if (!container) return;
+  var dropdown = container.querySelector('.multi-select-dropdown');
+  if (dropdown.children.length > 0) return;
+  for (var i = 0; i < items.length; i++) {
+    var label = document.createElement('label');
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = items[i];
+    cb.addEventListener('change', function() { onMultiSelectChange(msId); });
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(' ' + items[i]));
+    dropdown.appendChild(label);
+  }
+}
+
+function toggleMultiSelect(msId) {
+  var container = document.getElementById(msId);
+  var dropdown = container.querySelector('.multi-select-dropdown');
+  var allDropdowns = document.querySelectorAll('.multi-select-dropdown.open');
+  for (var i = 0; i < allDropdowns.length; i++) {
+    if (allDropdowns[i] !== dropdown) allDropdowns[i].classList.remove('open');
+  }
+  dropdown.classList.toggle('open');
+}
+
+function onMultiSelectChange(msId) {
+  var container = document.getElementById(msId);
+  var checkboxes = container.querySelectorAll('.multi-select-dropdown input[type="checkbox"]');
+  var selected = [];
+  for (var i = 0; i < checkboxes.length; i++) {
+    if (checkboxes[i].checked) selected.push(checkboxes[i].value);
+  }
+  multiSelectValues[msId] = selected;
+  var trigger = container.querySelector('.selected-tags');
+  if (selected.length === 0) {
+    trigger.innerHTML = '<span class="placeholder">全部</span>';
+  } else {
+    trigger.innerHTML = selected.map(function(v) {
+      return '<span class="sel-tag">' + escHtml(v) + '</span>';
+    }).join('');
+  }
+  applyFilter();
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.multi-select')) {
+    var allDropdowns = document.querySelectorAll('.multi-select-dropdown.open');
+    for (var i = 0; i < allDropdowns.length; i++) {
+      allDropdowns[i].classList.remove('open');
+    }
+  }
+});
+
+// ── Render ──
+function renderTable(data) {
+  var loading = document.getElementById('loading');
+  var tableWrap = document.getElementById('tableWrap');
+  var emptyState = document.getElementById('emptyState');
+  var resultCount = document.getElementById('resultCount');
+
+  loading.style.display = 'none';
+
+  resultCount.innerHTML = '共 <strong>' + fmtNum(data.total) + '</strong> 辆车';
+
+  if (!data.cars || data.cars.length === 0) {
+    tableWrap.style.display = 'none';
+    emptyState.style.display = 'block';
+    return;
+  }
+
+  emptyState.style.display = 'none';
+  tableWrap.style.display = 'block';
+
+  var cars = data.cars;
+  var html = '<thead><tr>';
+
+  var columns = [
+    { label: '车型', key: 'car_name' },
+    { label: '法院', key: 'court' },
+    { label: '成交价(指导价)', key: 'final_price', cls: 'td-right' },
+    { label: '保证金', key: 'deposit', cls: 'td-right' },
+    { label: '违章', key: 'violation_count', cls: 'td-right' },
+    { label: '额外费用', key: 'total_extra_fee', cls: 'td-right' },
+    { label: '行驶证', key: 'has_license' },
+    { label: '登记证', key: 'has_registration' },
+    { label: '车牌', key: 'has_plate' },
+    { label: '钥匙', key: 'has_key' },
+    { label: '抵押', key: 'is_mortgaged' },
+    { label: '燃料', key: 'fuel_type' },
+    { label: '排放', key: 'emission_standard' },
+    { label: '里程', key: 'mileage', cls: 'td-right' },
+    { label: '登记日期', key: 'first_reg_date' },
+    { label: '看车地点', key: 'preview_location' },
+  ];
+
+  for (var c = 0; c < columns.length; c++) {
+    var col = columns[c];
+    var sortIdx = -1;
+    for (var si = 0; si < sortState.length; si++) {
+      if (sortState[si].key === col.key) { sortIdx = si; break; }
+    }
+    var isSorted = sortIdx >= 0;
+    var arrow = '';
+    if (isSorted) {
+      var dir = sortState[sortIdx].dir;
+      arrow = (dir === 'asc' ? '&#8593;' : '&#8595;') +
+        (sortState.length > 1 ? '<span class="sort-badge">' + (sortIdx + 1) + '</span>' : '');
+    }
+    html += '<th class="' + (col.cls || '') + (isSorted ? ' sorted' : '') + '" onclick="sortBy(\'' + col.key + '\')">' +
+      col.label + '<span class="sort-arrow' + (isSorted ? ' active' : '') + '">' + arrow + '</span></th>';
+  }
+  html += '</tr></thead><tbody>';
+
+  for (var i = 0; i < cars.length; i++) {
+    var c = cars[i];
+    html += '<tr>' +
+      '<td><a href="' + c.car_link + '" target="_blank" rel="noopener" class="td-link">' + escHtml(c.car_name) + '</a></td>' +
+      '<td>' + escHtml(c.court || '-') + '</td>' +
+      '<td class="td-right">' + fmtPrice(c.final_price) + '</td>' +
+      '<td class="td-right">' + fmtPrice(c.deposit) + '</td>' +
+      '<td class="td-right"><span class="td-violation">' + fmtViolation(c) + '</span></td>' +
+      '<td class="td-right">' + fmtPrice(c.total_extra_fee) + '</td>' +
+      '<td class="td-docs">' + (c.has_license === '有' ? '<span class="yes">有</span>' : '<span class="no">无</span>') + '</td>' +
+      '<td class="td-docs">' + (c.has_registration === '有' ? '<span class="yes">有</span>' : '<span class="no">无</span>') + '</td>' +
+      '<td class="td-docs">' + (c.has_plate === '有' ? '<span class="yes">有</span>' : '<span class="no">无</span>') + '</td>' +
+      '<td>' + fmtYesNo(c.has_key) + '</td>' +
+      '<td>' + (c.is_mortgaged === '是' ? '是' : '否') + '</td>' +
+      '<td>' + escHtml(c.fuel_type || '-') + '</td>' +
+      '<td>' + escHtml(c.emission_standard || '-') + '</td>' +
+      '<td class="td-right">' + (c.mileage ? fmtNum(c.mileage) + 'km' : '-') + '</td>' +
+      '<td>' + escHtml(c.first_reg_date || '-') + '</td>' +
+      '<td><span title="' + escAttr(c.preview_location || '') + '" class="truncate">' + escHtml(truncate(c.preview_location, 20)) + '</span></td>' +
+      '</tr>';
+  }
+  html += '</tbody>';
+
+  document.getElementById('carsTable').innerHTML = html;
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function escAttr(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ── Sort (multi-column) ──
+function sortBy(key) {
+  var idx = -1;
+  for (var i = 0; i < sortState.length; i++) {
+    if (sortState[i].key === key) { idx = i; break; }
+  }
+  if (idx === -1) {
+    sortState.push({ key: key, dir: 'asc' });
+  } else if (sortState[idx].dir === 'asc') {
+    sortState[idx].dir = 'desc';
+  } else {
+    sortState.splice(idx, 1);
+  }
+  if (sortState.length === 0) {
+    sortState.push({ key: 'final_price', dir: 'asc' });
+  }
+  fetchCars();
+}
+
+// ── Filter ──
+function applyFilter() {
+  fetchCars();
+}
+
+function resetFilter() {
+  var selects = document.querySelectorAll('select[id^="f-"]');
+  for (var i = 0; i < selects.length; i++) {
+    selects[i].value = '';
+  }
+  var inputs = document.querySelectorAll('input[id^="f-"]');
+  for (var j = 0; j < inputs.length; j++) {
+    inputs[j].value = '';
+  }
+  for (var msId in multiSelectValues) {
+    multiSelectValues[msId] = [];
+    var container = document.getElementById(msId);
+    if (container) {
+      var cbs = container.querySelectorAll('.multi-select-dropdown input[type="checkbox"]');
+      for (var k = 0; k < cbs.length; k++) cbs[k].checked = false;
+      container.querySelector('.selected-tags').innerHTML = '<span class="placeholder">全部</span>';
+    }
+  }
+  sortState = [{ key: 'final_price', dir: 'asc' }];
+  fetchCars();
+}
+
+// ── Select change auto-trigger ──
+document.addEventListener('DOMContentLoaded', function() {
+  var selects = document.querySelectorAll('select[id^="f-"]');
+  for (var i = 0; i < selects.length; i++) {
+    selects[i].addEventListener('change', function() {
+      applyFilter();
+    });
+  }
+
+  fetchCars();
+});
+
+// ── Enter key ──
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+    applyFilter();
+  }
+});
+</script>
+</body>
+</html>

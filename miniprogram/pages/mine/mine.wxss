@@ -1,0 +1,110 @@
+/* pages/mine/mine.wxss — 我的页 */
+
+/* 顶部个人信息卡（纯展示） */
+.profile-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 44rpx 24rpx;
+  background: linear-gradient(135deg, #1a1a2e, #2d2d44);
+}
+
+.profile-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #fff;
+}
+
+.profile-sub {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #a0a0b0;
+}
+
+/* 收藏行 */
+.fav-row {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f2f5;
+}
+
+.fav-row:last-child {
+  border-bottom: none;
+}
+
+.fav-name {
+  flex: 1;
+  font-size: 28rpx;
+  color: #2c3e50;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fav-price {
+  margin-left: 16rpx;
+  font-size: 26rpx;
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.fav-arrow {
+  margin-left: 12rpx;
+  color: #a0a0b0;
+  font-size: 32rpx;
+}
+
+.fav-more {
+  padding-top: 16rpx;
+  text-align: center;
+  font-size: 24rpx;
+  color: #a0a0b0;
+}
+
+/* 查询历史行 */
+.his-row {
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f2f5;
+}
+
+.his-row:last-child {
+  border-bottom: none;
+}
+
+.his-top {
+  display: flex;
+  align-items: center;
+}
+
+.his-reg {
+  font-size: 26rpx;
+  color: #2c3e50;
+}
+
+.his-summary {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #57606f;
+}
+
+.his-time {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: #a0a0b0;
+}
+
+/* 清空历史按钮 */
+.clear-btn {
+  margin-top: 24rpx;
+  padding: 18rpx 0;
+  text-align: center;
+  font-size: 28rpx;
+  color: #e74c3c;
+  border: 1rpx solid #e74c3c;
+  border-radius: 12rpx;
+}
+
+.clear-btn:active {
+  opacity: 0.7;
+}

@@ -1,0 +1,167 @@
+/* pages/trends/trends.wxss — 数据分析页 */
+.chart-wrap {
+  width: 100%;
+}
+
+.chart-tall {
+  height: 560rpx;
+}
+
+.chart-mid {
+  height: 480rpx;
+}
+
+/* 摇号次数分布条形行 */
+.bar-row {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 0;
+}
+
+.bar-label {
+  width: 130rpx;
+  font-size: 24rpx;
+  color: #57606f;
+  flex-shrink: 0;
+}
+
+.bar-track {
+  flex: 1;
+  height: 20rpx;
+  background: #f0f2f5;
+  border-radius: 10rpx;
+  overflow: hidden;
+  margin: 0 16rpx;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 10rpx;
+}
+
+.bar-red {
+  background: #e74c3c;
+}
+
+.bar-count {
+  width: 80rpx;
+  text-align: right;
+  font-size: 24rpx;
+  color: #2c3e50;
+  flex-shrink: 0;
+}
+
+/* 法院 / 品牌 Top 排名行 */
+.rank-row {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 0;
+}
+
+.rank-no {
+  width: 44rpx;
+  height: 44rpx;
+  line-height: 44rpx;
+  text-align: center;
+  border-radius: 8rpx;
+  background: #f0f2f5;
+  color: #57606f;
+  font-size: 24rpx;
+  flex-shrink: 0;
+}
+
+.rank-hot {
+  background: #fff0ee;
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.rank-name {
+  width: 200rpx;
+  margin-left: 16rpx;
+  font-size: 26rpx;
+  color: #2c3e50;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.rank-bar {
+  flex: 1;
+  height: 16rpx;
+  background: #f0f2f5;
+  border-radius: 8rpx;
+  overflow: hidden;
+  margin: 0 16rpx;
+}
+
+.rank-fill {
+  height: 100%;
+  background: #a0a0b0;
+  border-radius: 8rpx;
+}
+
+.rank-count {
+  width: 80rpx;
+  text-align: right;
+  font-size: 24rpx;
+  color: #57606f;
+  flex-shrink: 0;
+}
+/* 我的速览卡 */
+.trend-brief {
+  display: flex;
+  align-items: center;
+}
+
+.trend-brief-main {
+  flex: 1;
+}
+
+.trend-brief-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 6rpx;
+}
+
+.trend-brief-text {
+  font-size: 24rpx;
+  color: #57606f;
+  line-height: 1.6;
+}
+
+.trend-brief-btn {
+  flex-shrink: 0;
+  background: #e74c3c;
+  color: #fff;
+  font-size: 24rpx;
+  border-radius: 999rpx;
+  padding: 12rpx 24rpx;
+  margin-left: 16rpx;
+}
+
+/* 次数分布解读行 */
+.trend-insight {
+  font-size: 24rpx;
+  color: #57606f;
+  background: #f5f6fa;
+  border-radius: 8rpx;
+  padding: 12rpx 16rpx;
+  margin-bottom: 16rpx;
+  line-height: 1.7;
+}
+
+/* 数据概览 */
+.trend-stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12rpx 0;
+  border-bottom: 1rpx solid #f5f6fa;
+  font-size: 26rpx;
+}
+
+.trend-stat-row:last-child {
+  border-bottom: none;
+}

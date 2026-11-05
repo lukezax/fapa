@@ -1,0 +1,146 @@
+/* pages/car-detail/car-detail.wxss — 车辆详情页 */
+
+/* 顶部卡片 */
+.detail-head {
+  padding: 24rpx;
+}
+
+.head-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.head-main {
+  flex: 1;
+  margin-right: 20rpx;
+}
+
+.car-name {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #2c3e50;
+  line-height: 1.4;
+  margin-bottom: 12rpx;
+}
+
+.head-tags {
+  display: flex;
+  align-items: center;
+}
+
+/* 收藏按钮（圆形） */
+.fav-btn {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: #f0f2f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  color: #a0a0b0;
+  flex-shrink: 0;
+}
+
+.fav-on {
+  background: #fff0ee;
+  color: #e74c3c;
+}
+
+/* 仅中拍记录提示条（浅黄底） */
+.winner-tip {
+  margin-top: 16rpx;
+  padding: 16rpx 20rpx;
+  background: #fff8e1;
+  color: #8a6d3b;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+}
+
+/* 价格卡片 */
+.price-card {
+  padding: 24rpx;
+}
+
+.price-row {
+  display: flex;
+}
+
+.price-item {
+  flex: 1;
+  text-align: center;
+}
+
+.price-label {
+  font-size: 24rpx;
+  color: #a0a0b0;
+  margin-bottom: 8rpx;
+}
+
+.price-value {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.price-final {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #e74c3c;
+}
+
+.price-ratio {
+  margin-top: 16rpx;
+  text-align: center;
+  font-size: 24rpx;
+  color: #57606f;
+}
+
+/* 信息行 */
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 14rpx 0;
+  font-size: 26rpx;
+  border-bottom: 2rpx solid #f5f6fa;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  color: #a0a0b0;
+  flex-shrink: 0;
+  margin-right: 24rpx;
+}
+
+.info-value {
+  color: #2c3e50;
+  text-align: right;
+  word-break: break-all;
+}
+/* 头部操作区：分享 + 收藏 */
+.head-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* 分享按钮（重置原生 button 样式，尺寸对齐收藏按钮） */
+.detail-share-btn {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: #f0f2f5;
+  font-size: 22rpx;
+  color: #57606f;
+  line-height: 72rpx;
+  padding: 0;
+  margin-right: 16rpx;
+}
+
+.detail-share-btn::after {
+  border: none;
+}

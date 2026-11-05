@@ -1,0 +1,77 @@
+/* app.wxss — 全局样式 */
+page {
+  background: #f5f6fa;
+  font-size: 28rpx;
+  color: #2c3e50;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+}
+
+.container {
+  padding: 24rpx;
+}
+
+.card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.card-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  margin-bottom: 16rpx;
+}
+
+.btn-primary {
+  background: #e74c3c;
+  color: #fff;
+  border-radius: 12rpx;
+  font-size: 30rpx;
+  padding: 20rpx 0;
+  text-align: center;
+}
+
+.btn-primary:active {
+  opacity: 0.85;
+}
+
+.tag {
+  display: inline-block;
+  padding: 4rpx 16rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+  margin-right: 12rpx;
+  background: #f0f2f5;
+  color: #57606f;
+}
+
+.tag-hot {
+  background: #fff0ee;
+  color: #e74c3c;
+}
+
+.empty {
+  text-align: center;
+  color: #a0a0b0;
+  padding: 60rpx 0;
+  font-size: 26rpx;
+}
+
+.loading {
+  text-align: center;
+  color: #a0a0b0;
+  padding: 40rpx 0;
+}
+
+/* 广告位容器 */
+.ad-container {
+  margin: 16rpx 0;
+  display: flex;
+  justify-content: center;
+  background: #fff;
+  border-radius: 12rpx;
+  overflow: hidden;
+}

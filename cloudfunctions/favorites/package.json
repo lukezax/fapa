@@ -1,0 +1,9 @@
+{
+  "name": "favorites",
+  "version": "1.0.0",
+  "description": "收藏管理",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

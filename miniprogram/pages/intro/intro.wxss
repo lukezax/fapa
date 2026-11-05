@@ -1,0 +1,102 @@
+/* pages/intro/intro.wxss — 应用介绍页 */
+
+.intro-hero {
+  text-align: center;
+  padding: 48rpx 32rpx;
+}
+
+.intro-title {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.intro-sub {
+  font-size: 26rpx;
+  color: #57606f;
+  line-height: 1.7;
+  margin: 20rpx 0 36rpx;
+}
+
+.intro-step {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 28rpx;
+}
+
+.intro-step:last-child {
+  margin-bottom: 0;
+}
+
+.intro-step-no {
+  flex-shrink: 0;
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background: #e74c3c;
+  color: #fff;
+  font-size: 26rpx;
+  text-align: center;
+  line-height: 44rpx;
+  margin-right: 20rpx;
+}
+
+.intro-step-body {
+  flex: 1;
+}
+
+.intro-step-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 6rpx;
+}
+
+.intro-step-desc {
+  font-size: 24rpx;
+  color: #57606f;
+  line-height: 1.7;
+}
+
+.intro-stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 14rpx 0;
+  border-bottom: 1rpx solid #f5f6fa;
+  font-size: 26rpx;
+}
+
+.intro-stat-row:last-child {
+  border-bottom: none;
+}
+
+.intro-stat-label {
+  color: #57606f;
+}
+
+.intro-stat-val {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.intro-foot {
+  text-align: center;
+  font-size: 22rpx;
+  color: #a0a0b0;
+  padding: 24rpx 32rpx;
+  line-height: 1.7;
+}
+
+/* 分享按钮（重置原生 button 样式） */
+.intro-share-btn {
+  margin-top: 20rpx;
+  background: transparent;
+  color: #57606f;
+  font-size: 26rpx;
+  line-height: 1.6;
+  padding: 8rpx 24rpx;
+}
+
+.intro-share-btn::after {
+  border: none;
+}

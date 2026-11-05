@@ -1,0 +1,49 @@
+{
+  "pages": [
+    "pages/intro/intro",
+    "pages/rank/rank",
+    "pages/cars/cars",
+    "pages/trends/trends",
+    "pages/mine/mine",
+    "pages/car-detail/car-detail"
+  ],
+  "window": {
+    "backgroundTextStyle": "dark",
+    "navigationBarBackgroundColor": "#1a1a2e",
+    "navigationBarTitleText": "京慧车讯",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f5f6fa"
+  },
+  "tabBar": {
+    "color": "#8a8a9a",
+    "selectedColor": "#e74c3c",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/intro/intro",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/rank/rank",
+        "text": "排名查询"
+      },
+      {
+        "pagePath": "pages/cars/cars",
+        "text": "车辆筛选"
+      },
+      {
+        "pagePath": "pages/trends/trends",
+        "text": "数据分析"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的"
+      }
+    ]
+  },
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents",
+  "sitemapLocation": "sitemap.json",
+  "cloud": true
+}

@@ -1,0 +1,46 @@
+<!-- pages/intro/intro.wxml — 应用介绍（默认首页） -->
+<view class="container">
+
+  <view class="card intro-hero">
+    <view class="intro-title">京慧车讯</view>
+    <view class="intro-sub">15 期真实成交数据 · 看清你的竞争位置 · 找到适合你的车</view>
+    <view class="btn-primary" bindtap="goRank">立即查询我的排名</view>
+    <button class="intro-share-btn" open-type="share">分享给朋友</button>
+  </view>
+
+  <view class="card">
+    <view class="card-title">三步找到适合你的车</view>
+    <view class="intro-step">
+      <text class="intro-step-no">1</text>
+      <view class="intro-step-body">
+        <view class="intro-step-name">算位置</view>
+        <view class="intro-step-desc">输入累计参与次数与注册时间，在历史成交数据中定位你的相对位置</view>
+      </view>
+    </view>
+    <view class="intro-step">
+      <text class="intro-step-no">2</text>
+      <view class="intro-step-body">
+        <view class="intro-step-name">比档位</view>
+        <view class="intro-step-desc">历史上与你位置相近的成交者都选了什么价位，一张图看清各价位段的门槛与热度</view>
+      </view>
+    </view>
+    <view class="intro-step">
+      <text class="intro-step-no">3</text>
+      <view class="intro-step-body">
+        <view class="intro-step-name">选车辆</view>
+        <view class="intro-step-desc">4,334 台车源按品牌/燃料/证件/里程极速筛选，列表直览关键信息，不用逐台点开网页</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">数据说明</view>
+    <view class="intro-stat-row"><text class="intro-stat-label">覆盖期次</text><text class="intro-stat-val">16 期（202011 - 202611）</text></view>
+    <view class="intro-stat-row"><text class="intro-stat-label">历史样本</text><text class="intro-stat-val">199,554 条</text></view>
+    <view class="intro-stat-row"><text class="intro-stat-label">成交记录</text><text class="intro-stat-val">5,407 条</text></view>
+    <view class="intro-stat-row"><text class="intro-stat-label">车辆档案</text><text class="intro-stat-val">4,840 台（最新期含完整车况）</text></view>
+  </view>
+
+  <view class="intro-foot">数据整理自公开渠道的历史成交信息，仅供个人研究参考，不构成任何建议。</view>
+
+</view>
