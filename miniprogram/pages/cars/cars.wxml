@@ -207,6 +207,12 @@
     </view>
   </view>
 
+  <!-- 本期标识 -->
+  <view class="period-bar">
+    <text class="period-name">202611期 · 本期在售</text>
+    <text class="period-count" wx:if="{{total}}">共 {{total}} 台</text>
+  </view>
+
   <!-- 排序栏 -->
   <view class="sort-bar">
     <view

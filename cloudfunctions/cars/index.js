@@ -7,6 +7,10 @@ const db = cloud.database();
 const _ = db.command;
 const $ = db.command.aggregate;
 
+// 本期在售期次（202611 期）。筛选/详情只允许访问这一期。
+const CURRENT_ZCID = 2464;
+const CURRENT_PERIOD = '202611期';
+
 // 字符串等值筛选（空值/null 不过滤）
 function eqFilter(filters, key, field) {
   const v = filters ? filters[key] : null;
@@ -92,16 +96,16 @@ function buildWhere(filters, zcid) {
 }
 
 async function latestZcid() {
-  const res = await db.collection('cars').orderBy('zcid', 'desc').limit(1).get();
-  return res.data.length ? res.data[0].zcid : 0;
+  // 固定返回本期在售期次
+  return CURRENT_ZCID;
 }
 
 async function list(event) {
-  const zcid = event.zcid || null;
+  const zcid = CURRENT_ZCID;
   const page = Math.max(1, parseInt(event.page, 10) || 1);
   const pageSize = Math.min(50, Math.max(1, parseInt(event.pageSize, 10) || 20));
   const filters = event.filters || {};
-  const sort = event.sort || 'final_price';
+  const sort = event.sort || 'start_price';
   const dir = event.dir === 'desc' ? 'desc' : 'asc';
 
   const where = buildWhere(filters, zcid);
@@ -162,8 +166,12 @@ async function detail(event) {
   const { car_link, openid } = event;
   if (!car_link) return { error: { code: 400, msg: '缺少 car_link' } };
 
-  const res = await db.collection('cars').where({ car_link }).limit(1).get();
-  if (res.data.length === 0) return { error: { code: 404, msg: '车辆不存在' } };
+  // 只允许查看本期在售车辆
+  const res = await db.collection('cars')
+    .where({ car_link, zcid: CURRENT_ZCID }).limit(1).get();
+  if (res.data.length === 0) {
+    return { error: { code: 404, msg: '车辆不存在或非本期在售' } };
+  }
   const car = res.data[0];
 
   // 联表 winners：同一 car_link 可能跨期重复拍卖，优先取与车辆同期的记录
@@ -191,19 +199,13 @@ async function detail(event) {
 }
 
 async function zcids() {
-  const res = await db.collection('cars').aggregate()
-    .group({ _id: '$zcid', period: $.max('$period'), count: $.sum(1) })
-    .sort({ _id: -1 })
-    .end();
-
-  const zcidsList = res.list.map(r => ({
-    zcid: r._id,
-    period: r.period || String(r._id),
-    count: r.count
-  }));
-
-  const latest = zcidsList.length ? zcidsList[0].zcid : 0;
-  return { zcids: zcidsList, latest };
+  // 只提供本期在售期次
+  const countRes = await db.collection('cars')
+    .where({ zcid: CURRENT_ZCID }).count();
+  return {
+    zcids: [{ zcid: CURRENT_ZCID, period: CURRENT_PERIOD, count: countRes.total }],
+    latest: CURRENT_ZCID
+  };
 }
 
 exports.main = async (event, context) => {

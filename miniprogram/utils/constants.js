@@ -1,5 +1,9 @@
 // utils/constants.js — 前端共享常量（与 docs/API_CONTRACT.md 同步）
 module.exports = {
+  // 本期在售期次（车辆筛选/详情只允许这一期；历史数据仅用于排名页推荐）
+  CURRENT_ZCID: 2464,
+  CURRENT_PERIOD: '202611期',
+
   // 9 档价格区间（与 winners.price_bracket 对应）
   PRICE_BRACKETS: [
     '0-5万', '5-10万', '10-15万', '15-20万', '20-25万',

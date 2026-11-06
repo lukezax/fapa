@@ -1,0 +1,23 @@
+{
+  "has_license": "无",
+  "has_registration": "无",
+  "has_plate": "有",
+  "use_type": "非营运",
+  "has_key": "有",
+  "preview_location": "北京市延庆区康庄镇天佑路 7号执行局院内停车场",
+  "violation_count": 1,
+  "violation_points": 1,
+  "violation_fine": 100,
+  "is_mortgaged": "是",
+  "parking_fee": "",
+  "repair_fee": "",
+  "total_extra_fee": 4435,
+  "first_reg_date": "2018年12月14日",
+  "inspection_expiry": "2026年12月31日",
+  "vehicle_model": "WAURGEF8",
+  "fuel_type": "汽油",
+  "emission_standard": "国五",
+  "appraisal_price": 253844,
+  "deposit": 250000,
+  "mileage": ""
+}

@@ -1,0 +1,79 @@
+{
+  "zcid": 2464,
+  "detail_rows": 506,
+  "detail_unique_links": 506,
+  "duplicate_links": 0,
+  "survey_txt": 503,
+  "missing_survey_txt": [
+    "https://jpxkc.cbex.com/jpxkc/prj/detail/614629.html",
+    "https://jpxkc.cbex.com/jpxkc/prj/detail/614582.html",
+    "https://jpxkc.cbex.com/jpxkc/prj/detail/615039.html"
+  ],
+  "llm_rows_with_data": 503,
+  "mileage_rows": 506,
+  "mileage_found": 499,
+  "mileage_found_rate": 98.6,
+  "vlm_status_counter": {
+    "found": 498,
+    "": 1,
+    "not_found": 7
+  },
+  "mileage_outliers": [
+    {
+      "car_link": "https://jpxkc.cbex.com/jpxkc/prj/detail/604722.html",
+      "mileage_km": 414100.0
+    },
+    {
+      "car_link": "https://jpxkc.cbex.com/jpxkc/prj/detail/615048.html",
+      "mileage_km": 3379.0
+    },
+    {
+      "car_link": "https://jpxkc.cbex.com/jpxkc/prj/detail/610279.html",
+      "mileage_km": 329.0
+    },
+    {
+      "car_link": "https://jpxkc.cbex.com/jpxkc/prj/detail/613125.html",
+      "mileage_km": 1330.0
+    },
+    {
+      "car_link": "https://jpxkc.cbex.com/jpxkc/prj/detail/612708.html",
+      "mileage_km": 2348.0
+    }
+  ],
+  "repeated_mileage_top": [
+    {
+      "km": 100000,
+      "count": 8
+    },
+    {
+      "km": 10000,
+      "count": 5
+    },
+    {
+      "km": 11111,
+      "count": 3
+    },
+    {
+      "km": 111111,
+      "count": 2
+    },
+    {
+      "km": 168769,
+      "count": 2
+    },
+    {
+      "km": 100071,
+      "count": 2
+    },
+    {
+      "km": 10111,
+      "count": 2
+    },
+    {
+      "km": 10166,
+      "count": 2
+    }
+  ],
+  "empty_court": 0,
+  "bad_start_price": 0
+}

@@ -204,7 +204,7 @@
 <body>
 <div class="container" id="app">
   <p class="breadcrumb">
-    <a href="/">京牌竞拍分析</a><span class="sep">></span><span>车辆详情筛选</span>
+    <a href="/">京牌竞拍分析</a><span class="sep">></span><span>本期在售车辆（202611期）</span>
   </p>
   <a href="/" class="back-link">&larr; 返回主页</a>
 
@@ -365,7 +365,7 @@
 
 <script>
 // ── State ──
-let sortState = [{ key: 'final_price', dir: 'asc' }];
+let sortState = [{ key: 'start_price', dir: 'asc' }];
 let multiSelectValues = { 'ms-brand': [], 'ms-court': [], 'ms-fuel': [], 'ms-emission': [] };
 
 // ── Format helpers ──
@@ -545,7 +545,7 @@ function renderTable(data) {
 
   loading.style.display = 'none';
 
-  resultCount.innerHTML = '共 <strong>' + fmtNum(data.total) + '</strong> 辆车';
+  resultCount.innerHTML = '本期在售共 <strong>' + fmtNum(data.total) + '</strong> 辆车';
 
   if (!data.cars || data.cars.length === 0) {
     tableWrap.style.display = 'none';
@@ -562,7 +562,8 @@ function renderTable(data) {
   var columns = [
     { label: '车型', key: 'car_name' },
     { label: '法院', key: 'court' },
-    { label: '成交价(指导价)', key: 'final_price', cls: 'td-right' },
+    { label: '起拍价', key: 'start_price', cls: 'td-right' },
+    { label: '最高限价', key: 'limit_price', cls: 'td-right' },
     { label: '保证金', key: 'deposit', cls: 'td-right' },
     { label: '违章', key: 'violation_count', cls: 'td-right' },
     { label: '额外费用', key: 'total_extra_fee', cls: 'td-right' },
@@ -601,7 +602,8 @@ function renderTable(data) {
     html += '<tr>' +
       '<td><a href="' + c.car_link + '" target="_blank" rel="noopener" class="td-link">' + escHtml(c.car_name) + '</a></td>' +
       '<td>' + escHtml(c.court || '-') + '</td>' +
-      '<td class="td-right">' + fmtPrice(c.final_price) + '</td>' +
+      '<td class="td-right">' + fmtPrice(c.start_price) + '</td>' +
+      '<td class="td-right">' + fmtPrice(c.limit_price) + '</td>' +
       '<td class="td-right">' + fmtPrice(c.deposit) + '</td>' +
       '<td class="td-right"><span class="td-violation">' + fmtViolation(c) + '</span></td>' +
       '<td class="td-right">' + fmtPrice(c.total_extra_fee) + '</td>' +
@@ -646,7 +648,7 @@ function sortBy(key) {
     sortState.splice(idx, 1);
   }
   if (sortState.length === 0) {
-    sortState.push({ key: 'final_price', dir: 'asc' });
+    sortState.push({ key: 'start_price', dir: 'asc' });
   }
   fetchCars();
 }
@@ -674,7 +676,7 @@ function resetFilter() {
       container.querySelector('.selected-tags').innerHTML = '<span class="placeholder">全部</span>';
     }
   }
-  sortState = [{ key: 'final_price', dir: 'asc' }];
+  sortState = [{ key: 'start_price', dir: 'asc' }];
   fetchCars();
 }
 

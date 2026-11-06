@@ -193,6 +193,29 @@
 }
 
 /* 排序栏 */
+/* 本期标识 */
+.period-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.period-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.period-count {
+  font-size: 24rpx;
+  color: #8a8a9a;
+}
+
 .sort-bar {
   display: flex;
   background: #fff;

@@ -1,0 +1,23 @@
+{
+  "has_license": "无",
+  "has_registration": "无",
+  "has_plate": "有",
+  "use_type": "非营运",
+  "has_key": "有",
+  "preview_location": "朝阳区东坝路李家坟5号祥龙博瑞集团二分公司东侧停车场",
+  "violation_count": 4,
+  "violation_points": 1,
+  "violation_fine": 800,
+  "is_mortgaged": "是",
+  "parking_fee": "",
+  "repair_fee": "",
+  "total_extra_fee": 2450,
+  "first_reg_date": "2020年12月15日",
+  "inspection_expiry": "2024年12月31日",
+  "vehicle_model": "CSA6493WEAT",
+  "fuel_type": "汽油",
+  "emission_standard": "国六",
+  "appraisal_price": 71359,
+  "deposit": 70000,
+  "mileage": ""
+}

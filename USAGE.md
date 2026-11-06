@@ -121,6 +121,31 @@ python3 webapp/app.py
 
 ---
 
+## 1.1 本期竞价前流程（202611期 / 2464）
+
+成交结果与资格池发布前，用 `--pre-auction` 拉标的列表 + 车况 + 里程：
+
+```bash
+export JPXKC_API_KEY='sk-...'        # LLM/VLM 密钥（tools/*_config.json 读取）
+
+python3 tools/run_pipeline.py 2464 --pre-auction            # 标的列表 + 调查表 + LLM + VLM
+# 等价拆分：
+python3 tools/download_projects.py 2464                     # 标的列表 + 最高限价
+python3 tools/download_survey.py 2464
+python3 tools/llm_parse_survey.py 2464 --force
+python3 tools/vlm_mileage.py 2464 --provider primary --concurrency 2
+```
+
+模型端点（见 `tools/llm_config.json` / `tools/vlm_config.json`）：
+- 主用 `http://192.168.200.73:8000/v1`，模型 `Qwen3.5-122B-A10B-w4a8-nothinking`；
+- 兜底 `http://127.0.0.1:8022/v1`，模型 `Qwen3.5-9B-ORG`；
+- 两者均需 `chat_template_kwargs.enable_thinking=false`（脚本已内置）。
+
+竞价结束后（11-16 之后）再跑完整 Pipeline A + B：`python3 tools/run_pipeline.py 2464`，
+然后 `python3 tools/import_db.py --current-zcid 2464` 重新导出并导入云端。
+
+---
+
 ## 2. 拆分执行
 
 按需单独运行某个步骤，适合调试或断点续跑。

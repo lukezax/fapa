@@ -9,151 +9,37 @@ import flask
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOWNLOADS_DIR = os.path.join(BASE_DIR, "downloads")
+sys.path.insert(0, BASE_DIR)
 
-
-def get_latest_zcid():
-    zcids = [int(d) for d in os.listdir(DOWNLOADS_DIR) if d.isdigit() and os.path.isdir(os.path.join(DOWNLOADS_DIR, d))]
-    return str(max(zcids)) if zcids else "2400"
+from tools.brand import extract_brand  # noqa: E402
 
 
 def get_all_zcids():
-    return sorted([d for d in os.listdir(DOWNLOADS_DIR) if d.isdigit() and os.path.isdir(os.path.join(DOWNLOADS_DIR, d))], key=int, reverse=True)
+    return sorted(
+        int(d) for d in os.listdir(DOWNLOADS_DIR)
+        if d.isdigit() and os.path.isdir(os.path.join(DOWNLOADS_DIR, d))
+    )
 
 
-LATEST_ZCID = get_latest_zcid()
-GSXX_PATH = os.path.join(DOWNLOADS_DIR, LATEST_ZCID, f"gsxx_{LATEST_ZCID}.csv")
+def get_latest_pool_zcid(all_zcids):
+    """最新一期有 gsxx_{zcid}.csv 的期次（排名基准）。"""
+    for zcid in sorted(all_zcids, reverse=True):
+        if os.path.exists(os.path.join(DOWNLOADS_DIR, str(zcid), f"gsxx_{zcid}.csv")):
+            return zcid
+    return max(all_zcids) if all_zcids else 2400
+
+
+ALL_ZCIDS = get_all_zcids()
+# 本期在售（车辆筛选/推荐车型来源）
+CURRENT_ZCID = max(ALL_ZCIDS) if ALL_ZCIDS else 2464
+CURRENT_PERIOD = {2464: "202611期"}.get(CURRENT_ZCID, f"{CURRENT_ZCID}期")
+# 排名资格池（最新一期有竞买人名单的期次）
+POOL_ZCID = get_latest_pool_zcid(ALL_ZCIDS)
+
+GSXX_PATH = os.path.join(DOWNLOADS_DIR, str(POOL_ZCID), f"gsxx_{POOL_ZCID}.csv")
 WINNER_PATH = os.path.join(DOWNLOADS_DIR, "winner_profiles.csv")
 
 app = flask.Flask(__name__)
-
-# ── Brand known list and extraction ──
-KNOWN_BRANDS = [
-    "梅赛德斯-奔驰", "梅赛德斯奔驰", "奔驰", "宝马", "MINI", "迷你",
-    "奥迪", "大众汽车", "大众", "丰田", "本田", "别克", "北京现代", "现代",
-    "福特", "日产", "东风日产", "尼桑", "沃尔沃",
-    "保时捷", "路虎", "揽胜运动", "揽胜", "捷豹",
-    "雷克萨斯", "凯迪拉克", "雪佛兰", "标致", "雪铁龙",
-    "马自达", "起亚", "三菱", "斯巴鲁", "英菲尼迪", "讴歌",
-    "红旗", "比亚迪", "蔚来", "小鹏", "理想", "特斯拉", "拓速乐",
-    "长安", "长城", "哈弗", "魏派", "WEY", "吉利", "领克",
-    "奇瑞", "江淮", "奔腾", "中华", "荣威", "名爵", "传祺",
-    "五菱", "宝骏", "东风", "一汽", "北汽", "北京汽车", "北京", "绅宝",
-    "DS", "smart",
-    "劳斯莱斯", "宾利", "法拉利", "玛莎拉蒂", "阿斯顿马丁", "迈凯伦",
-    "帕纳美拉", "埃尔法", "皇冠",
-    "霸道", "酷路泽", "陆地巡洋舰", "巡洋舰",
-    "神行者", "发现", "极光", "牧马人", "大切诺基", "指南者", "大捷龙",
-    "萨博", "欧宝", "金龙", "金杯", "福田", "新凯",
-    "北斗星", "天籁", "夏利", "思威", "帕萨特", "宝来",
-    "福克斯", "波罗", "捷达", "桑塔纳", "朗逸", "速腾",
-    "迈腾", "高尔夫", "途观", "途安", "途锐", "辉腾",
-    "凯越", "英朗", "君威", "君越", "林荫大道",
-    "雅阁", "飞度", "锋范", "思域", "奥德赛",
-    "凯美瑞", "卡罗拉", "汉兰达", "普拉多",
-    "骐达", "轩逸", "逍客", "奇骏",
-    "赛欧", "科鲁兹", "迈锐宝", "探界者", "昂科雷",
-    "索纳塔", "伊兰特", "途胜",
-    "胜达", "唯雅诺", "弈鸥", "凯尊", "凯宴", "博斯特", "迈凯",
-    "索兰托", "傲虎", "森林人", "欧蓝德", "迈特威",
-    "BMW", "尼桑",
-]
-
-BRAND_NORMALIZE = {
-    "大众汽车": "大众",
-    "梅赛德斯奔驰": "梅赛德斯-奔驰",
-    "北京汽车": "北京",
-    "揽胜运动": "揽胜",
-    "陆地巡洋舰": "丰田",
-    "巡洋舰": "丰田",
-    "霸道": "丰田",
-    "普拉多": "丰田",
-    "凯美瑞": "丰田",
-    "卡罗拉": "丰田",
-    "汉兰达": "丰田",
-    "RAV4": "丰田",
-    "埃尔法": "丰田",
-    "雅阁": "本田",
-    "思域": "本田",
-    "CR-V": "本田",
-    "奥德赛": "本田",
-    "飞度": "本田",
-    "锋范": "本田",
-    "思威": "本田",
-    "帕萨特": "大众",
-    "迈腾": "大众",
-    "速腾": "大众",
-    "朗逸": "大众",
-    "高尔夫": "大众",
-    "途观": "大众",
-    "途安": "大众",
-    "途锐": "大众",
-    "辉腾": "大众",
-    "宝来": "大众",
-    "捷达": "大众",
-    "桑塔纳": "大众",
-    "波罗": "大众",
-    "福克斯": "福特",
-    "BMW": "宝马",
-    "尼桑": "日产",
-    "天籁": "日产",
-    "轩逸": "日产",
-    "骐达": "日产",
-    "逍客": "日产",
-    "奇骏": "日产",
-    "凯越": "别克",
-    "英朗": "别克",
-    "君威": "别克",
-    "君越": "别克",
-    "GL8": "别克",
-    "林荫大道": "别克",
-    "昂科雷": "别克",
-    "赛欧": "雪佛兰",
-    "科鲁兹": "雪佛兰",
-    "迈锐宝": "雪佛兰",
-    "探界者": "雪佛兰",
-    "索纳塔": "现代",
-    "伊兰特": "现代",
-    "途胜": "现代",
-    "ix35": "现代",
-    "胜达": "现代",
-    "索兰托": "起亚",
-    "凯尊": "起亚",
-    "神行者": "路虎",
-    "发现": "路虎",
-    "极光": "路虎",
-    "揽胜": "路虎",
-    "牧马人": " Jeep",
-    "大切诺基": " Jeep",
-    "指南者": " Jeep",
-    "大捷龙": "克莱斯勒",
-    "欧蓝德": "三菱",
-    "傲虎": "斯巴鲁",
-    "森林人": "斯巴鲁",
-    "拓速乐": "特斯拉",
-    "凯宴": "保时捷",
-    "博斯特": "保时捷",
-    "帕纳美拉": "保时捷",
-    "迈凯": "保时捷",
-    "唯雅诺": "奔驰",
-    "迈特威": "大众",
-    "弈鸥": "大众",
-}
-
-
-def extract_brand(name):
-    name = name.strip()
-    # Case 1: has 牌 → extract text between license plate and 牌
-    m = re.search(r"(?:车牌号为)?京[0-9A-Za-z]+([\u4e00-\u9fffA-Za-z-]+)牌", name)
-    if m:
-        b = m.group(1).strip()
-        if b and len(b) <= 20:
-            return BRAND_NORMALIZE.get(b, b)
-    # Case 2: check known brands in name
-    for b in sorted(KNOWN_BRANDS, key=len, reverse=True):
-        if b in name:
-            nb = BRAND_NORMALIZE.get(b, b)
-            return nb
-    return "其他"
 
 
 # ── Time parsing ──
@@ -227,7 +113,7 @@ def bracket_sort_key(b):
 
 # ── Trend data ──
 def build_trends():
-    periods_order = get_all_zcids()
+    periods_order = [str(z) for z in ALL_ZCIDS]
     pd_data = {}
     for z in periods_order:
         total = 0
@@ -402,7 +288,51 @@ def calculate():
 
     panorama_list.sort(key=lambda x: -x["match_pct"])
 
-    periods_order = get_all_zcids()
+    # 本期在售：每个档位取起拍价落在区间内的车，升序取 5
+    def bracket_range(bk):
+        m = re.match(r"^(\d+)-(\d+)万$", str(bk or ""))
+        if not m:
+            return None
+        return int(m.group(1)) * 10000, int(m.group(2)) * 10000
+
+    current_cars_by_bracket = {}
+    for p in panorama_list:
+        rng = bracket_range(p["bracket"])
+        if not rng:
+            current_cars_by_bracket[p["bracket"]] = []
+            continue
+        lo, hi = rng
+        matched = []
+        for c in current_cars_pool:
+            sp = c.get("start_price")
+            try:
+                spv = float(sp)
+            except (TypeError, ValueError):
+                continue
+            if lo <= spv < hi:
+                predicted = (
+                    round(spv * p["avg_deal_ratio"])
+                    if p.get("avg_deal_ratio") else None
+                )
+                matched.append({
+                    "car_name": c.get("car_name", ""),
+                    "car_link": c.get("car_link", ""),
+                    "start_price": c.get("start_price", ""),
+                    "limit_price": c.get("limit_price", ""),
+                    "mileage": c.get("mileage", ""),
+                    "fuel_type": c.get("fuel_type", ""),
+                    "brand": c.get("_brand", ""),
+                    "predicted_final_price": predicted,
+                })
+        matched.sort(key=lambda x: float(x["start_price"] or 0))
+        current_cars_by_bracket[p["bracket"]] = matched[:5]
+
+    for p in panorama_list:
+        p["current_cars"] = current_cars_by_bracket.get(p["bracket"], [])
+        p["current_period"] = CURRENT_PERIOD
+        p["current_zcid"] = CURRENT_ZCID
+
+    periods_order = [str(z) for z in ALL_ZCIDS]
     period_trend_list = []
     for zcid in periods_order:
         total_bidders = 0
@@ -462,12 +392,32 @@ def calculate():
         "min_final_price": min_final_price,
         "panorama": panorama_list,
         "period_trend": period_trend_list,
+        "latest_zcid": POOL_ZCID,
+        "current_zcid": CURRENT_ZCID,
+        "current_period": CURRENT_PERIOD,
     }
 
 
 # ── Car detail data ──
-CAR_DETAILS_PATH = os.path.join(DOWNLOADS_DIR, LATEST_ZCID, "car_details_llm.csv")
-MILEAGE_PATH = os.path.join(DOWNLOADS_DIR, LATEST_ZCID, "mileage.csv")
+# ── Car detail data ──
+CAR_DETAILS_PATH = os.path.join(DOWNLOADS_DIR, str(CURRENT_ZCID), "car_details_llm.csv")
+MILEAGE_PATH = os.path.join(DOWNLOADS_DIR, str(CURRENT_ZCID), "mileage.csv")
+LIMIT_PATH = os.path.join(DOWNLOADS_DIR, str(CURRENT_ZCID), "limit_prices.csv")
+
+
+def load_limit_prices():
+    limits = {}
+    if os.path.exists(LIMIT_PATH):
+        with open(LIMIT_PATH, "r", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                link = row.get("car_link", "")
+                val = row.get("limit_price", "")
+                if link and val:
+                    try:
+                        limits[link] = float(val)
+                    except ValueError:
+                        pass
+    return limits
 
 
 def load_car_details():
@@ -488,12 +438,18 @@ def load_car_details():
                 if link and km:
                     mileage_map[link] = km
 
+    limit_map = load_limit_prices()
     for row in rows:
         link = row.get("car_link", "")
         if link in mileage_map:
             row["mileage"] = mileage_map[link]
+        row["limit_price"] = limit_map.get(link, "")
 
     return rows
+
+
+# 本期在售车辆池（202611期）：只用于推荐与筛选，历史期次不进入
+current_cars_pool = load_car_details()
 
 
 @app.route("/cars")
@@ -572,7 +528,7 @@ def api_cars():
         cars = [c for c in cars if c.get("mileage") and float(c.get("mileage", 0)) <= float(mileage_max)]
 
     # Sort
-    sort_by = flask.request.args.get("sort", "final_price")
+    sort_by = flask.request.args.get("sort", "start_price")
     sort_dir = flask.request.args.get("dir", "asc")
     
     sort_keys = [k.strip() for k in sort_by.split(",") if k.strip()]
@@ -609,6 +565,8 @@ def api_cars():
         "total": len(cars),
         "cars": cars,
         "options": options,
+        "current_zcid": CURRENT_ZCID,
+        "current_period": CURRENT_PERIOD,
     }
 
 

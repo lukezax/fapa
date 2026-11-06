@@ -1,0 +1,23 @@
+{
+  "has_license": "无",
+  "has_registration": "无",
+  "has_plate": "有",
+  "use_type": "非营运",
+  "has_key": "有",
+  "preview_location": "顺交机动车停车场",
+  "violation_count": 32,
+  "violation_points": 22,
+  "violation_fine": 3700,
+  "is_mortgaged": "是",
+  "parking_fee": 4408,
+  "repair_fee": 4190,
+  "total_extra_fee": 8598,
+  "first_reg_date": "2018年4月9日",
+  "inspection_expiry": "2026年4月30日",
+  "vehicle_model": "VCD7204C32",
+  "fuel_type": "汽油",
+  "emission_standard": "国五",
+  "appraisal_price": 101400,
+  "deposit": 100000,
+  "mileage": ""
+}

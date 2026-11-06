@@ -1,0 +1,23 @@
+{
+  "has_license": "无",
+  "has_registration": "有",
+  "has_plate": "有",
+  "use_type": "非营运",
+  "has_key": "有",
+  "preview_location": "朝阳区东坝路李家坟5号祥龙博瑞集团二分公司东侧停车场",
+  "violation_count": 11,
+  "violation_points": 23,
+  "violation_fine": 1900,
+  "is_mortgaged": "是",
+  "parking_fee": "",
+  "repair_fee": "",
+  "total_extra_fee": 2098,
+  "first_reg_date": "2021年12月09日",
+  "inspection_expiry": "2025年12月31日",
+  "vehicle_model": "HFC6483ECSEV5-W",
+  "fuel_type": "电",
+  "emission_standard": "国三",
+  "appraisal_price": 96900,
+  "deposit": 90000,
+  "mileage": ""
+}

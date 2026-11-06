@@ -43,12 +43,14 @@ async function getLatestPoolZcid() {
   return res.data.length ? res.data[0].zcid : 2400;
 }
 
-// 车辆最新期（本期在售的来源）
-async function getLatestCarsZcid() {
-  const res = await db.collection('cars')
-    .orderBy('zcid', 'desc').limit(1).get();
-  return res.data.length ? res.data[0].zcid : 0;
+// 车辆最新期（本期在售的来源，固定 2464）
+function getLatestCarsZcid() {
+  return CURRENT_ZCID;
 }
+
+// 本期在售期次（202611 期）。current_cars 只取这一期。
+const CURRENT_ZCID = 2464;
+const CURRENT_PERIOD = '202611期';
 
 // 价格档位字符串 → [下限, 上限)（元），如 "10-15万" → [100000, 150000]
 function bracketRange(bk) {
@@ -84,7 +86,7 @@ async function calculate(event) {
   }
 
   const latestZcid = await getLatestPoolZcid();
-  const carsZcid = await getLatestCarsZcid();
+  const carsZcid = getLatestCarsZcid();
 
   // 资格池总量（最新期）
   const totalRes = await db.collection('pool_all')
@@ -118,6 +120,7 @@ async function calculate(event) {
     if (!bracketStats[bk]) {
       bracketStats[bk] = {
         total: 0, pctList: [], finalPrices: [], timesList: [],
+        dealRatios: [],
         brands: {}, peerMatches: []
       };
     }
@@ -128,8 +131,12 @@ async function calculate(event) {
     d.timesList.push(parseInt(w.winner_times, 10) || 0);
 
     const fp = parseFloat(w.final_price);
+    const sp = parseFloat(w.start_price);
     if (!isNaN(fp)) {
       d.finalPrices.push(fp);
+    }
+    if (!isNaN(fp) && !isNaN(sp) && sp > 0) {
+      d.dealRatios.push(fp / sp);
     }
     const brand = w._brand || '未知';
     d.brands[brand] = (d.brands[brand] || 0) + 1;
@@ -211,9 +218,13 @@ async function calculate(event) {
       brand: m.brand, pct_diff: m.pct_diff
     }));
 
+    const avgDeal = d.dealRatios.length
+      ? Math.round(d.dealRatios.reduce((a, b) => a + b, 0) / d.dealRatios.length * 100) / 100 : 0;
+
     panoramaList.push({
       bracket: bk, match_count: matchCount, match_pct: matchPct,
       recommendation, avg_final_price: avgFinal, avg_winner_times: avgTimes,
+      avg_deal_ratio: avgDeal,
       difficulty, periods_covered: periodsCovered,
       top_brands: topBrandsObj, top5, all_matches: allMatches
     });
@@ -221,7 +232,7 @@ async function calculate(event) {
 
   panoramaList.sort((a, b) => b.match_pct - a.match_pct);
 
-  // 本期在售：每个档位查最新期起拍价落在区间内的车，升序取 5
+  // 本期在售：每个档位查本期起拍价落在区间内的车，升序取 5
   const currentCarsByBracket = {};
   if (carsZcid) {
     for (const p of panoramaList) {
@@ -233,17 +244,32 @@ async function calculate(event) {
         .orderBy('start_price', 'asc')
         .limit(5)
         .get();
-      currentCarsByBracket[p.bracket] = res.data.map(c => ({
-        car_name: c.car_name,
-        car_link: c.car_link,
-        start_price: c.start_price,
-        mileage_km: c.mileage_km,
-        fuel_type: c.fuel_type,
-        zcid: c.zcid
-      }));
+      currentCarsByBracket[p.bracket] = res.data.map(c => {
+        const predicted = (p.avg_deal_ratio > 0 && c.start_price)
+          ? Math.round(c.start_price * p.avg_deal_ratio) : null;
+        return {
+          car_name: c.car_name,
+          car_link: c.car_link,
+          start_price: c.start_price,
+          limit_price: c.limit_price != null ? c.limit_price : null,
+          mileage_km: c.mileage_km,
+          fuel_type: c.fuel_type,
+          brand: c.brand,
+          zcid: c.zcid,
+          predicted_final_price: predicted
+        };
+      });
     }
     for (const p of panoramaList) {
       p.current_cars = currentCarsByBracket[p.bracket] || [];
+      p.current_period = CURRENT_PERIOD;
+      p.current_zcid = CURRENT_ZCID;
+      if (p.current_cars.length && p.avg_deal_ratio > 0) {
+        p.recommend_reason = '历史同档平均成交为起拍价的 ' + p.avg_deal_ratio + ' 倍，'
+          + '本期在售 ' + p.current_cars.length + ' 台可参考该倍数出价';
+      } else {
+        p.recommend_reason = '';
+      }
     }
   }
 
@@ -303,7 +329,8 @@ async function calculate(event) {
     panorama: panoramaList,
     period_trend: periodTrendList,
     latest_zcid: latestZcid,
-    current_zcid: carsZcid
+    current_zcid: carsZcid,
+    current_period: CURRENT_PERIOD
   };
 }
 

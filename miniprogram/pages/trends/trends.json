@@ -2,7 +2,7 @@
   "usingComponents": {
     "ec-canvas": "../../components/ec-canvas/ec-canvas"
   },
-  "navigationBarTitleText": "数据分析",
+  "navigationBarTitleText": "本期数据",
   "navigationBarBackgroundColor": "#1a1a2e",
   "navigationBarTextStyle": "white",
   "backgroundColor": "#f5f6fa"

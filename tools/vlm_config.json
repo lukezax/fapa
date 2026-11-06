@@ -1,0 +1,15 @@
+{
+  "primary": {
+    "api_base": "http://192.168.200.73:8000/v1",
+    "model": "Qwen3.5-122B-A10B-w4a8-nothinking"
+  },
+  "fallback": {
+    "api_base": "http://127.0.0.1:8022/v1",
+    "model": "Qwen3.5-9B-ORG"
+  },
+  "api_key_env": "JPXKC_API_KEY",
+  "concurrency": 4,
+  "timeout": 180,
+  "max_tokens": 500,
+  "enable_thinking": false
+}

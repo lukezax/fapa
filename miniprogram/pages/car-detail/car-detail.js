@@ -1,6 +1,7 @@
-// pages/car-detail/car-detail.js — 车辆详情页
+// pages/car-detail/car-detail.js — 本期在售车辆详情页（仅 202611期 / 2464）
 const { toWan, toWanWithComma, formatViolation, formatPeriod, formatRegTime } = require('../../utils/format');
 const { AD_UNITS } = require('../../utils/ad');
+const { CURRENT_PERIOD } = require('../../utils/constants');
 
 Page({
   data: {
@@ -32,7 +33,17 @@ Page({
         });
       })
       .catch(err => {
-        wx.showToast({ title: err.message || '加载失败', icon: 'none' });
+        wx.showToast({
+          title: err.message || '加载失败',
+          icon: 'none',
+          duration: 2000
+        });
+        // 非本期车辆：返回列表
+        if (err && /非本期/.test(err.message)) {
+          setTimeout(() => wx.navigateBack({
+            fail: () => wx.switchTab({ url: '/pages/cars/cars' })
+          }), 1500);
+        }
       });
   },
 

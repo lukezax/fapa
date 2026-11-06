@@ -2,7 +2,8 @@
 App({
   globalData: {
     env: 'cloud1-d6g6tx36h29179055', // TODO: 替换为你的云开发环境 ID
-    latestZcid: null,
+    latestZcid: 2464,        // 本期在售（202611期）
+    currentPeriod: '202611期',
     openid: null
   },
 

@@ -67,7 +67,13 @@ def load_config():
         print(f"错误: 配置文件不存在: {CONFIG_PATH}")
         sys.exit(1)
     with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-        return json.load(f)
+        config = json.load(f)
+    # 密钥优先读环境变量，避免把 key 写进仓库
+    env_name = config.get("api_key_env", "JPXKC_API_KEY")
+    env_key = os.environ.get(env_name, "").strip()
+    if env_key:
+        config["api_key"] = env_key
+    return config
 
 
 def call_llm(config, survey_text):
@@ -81,14 +87,19 @@ def call_llm(config, survey_text):
         "temperature": config.get("temperature", 0),
         "max_tokens": config.get("max_tokens", 2000),
         # 思考型模型：关闭思考，否则 reasoning 吞掉输出 token
-        "chat_template_kwargs": {"enable_thinking": False},
+        "chat_template_kwargs": {
+            "enable_thinking": bool(config.get("enable_thinking", False))
+        },
         "messages": [
             {"role": "system", "content": "你是一个数据提取助手，只返回 JSON。"},
             {"role": "user", "content": EXTRACT_FIELDS + survey_text},
         ],
     }
 
-    resp = requests.post(url, headers=headers, json=payload, timeout=60)
+    resp = requests.post(
+        url, headers=headers, json=payload,
+        timeout=config.get("timeout", 90),
+    )
     resp.raise_for_status()
     data = resp.json()
 
@@ -141,11 +152,18 @@ def process_one(slug, survey_dir, config, force=False, output_dir=None):
         return slug, None, "empty"
 
     try:
-        result = call_llm(config, text)
-        normalize_mileage(result)
-        with open(cache_path, "w", encoding="utf-8") as f:
-            json.dump(result, f, ensure_ascii=False, indent=2)
-        return slug, result, "ok"
+        last_err = None
+        for attempt in range(3):
+            try:
+                result = call_llm(config, text)
+                normalize_mileage(result)
+                with open(cache_path, "w", encoding="utf-8") as f:
+                    json.dump(result, f, ensure_ascii=False, indent=2)
+                return slug, result, "ok"
+            except Exception as e:
+                last_err = e
+                time.sleep(1.5 * (attempt + 1))
+        return slug, None, f"error: {last_err}"
     except Exception as e:
         return slug, None, f"error: {e}"
 
@@ -164,6 +182,11 @@ def main():
             limit = int(sys.argv[idx + 1])
 
     config = load_config()
+    if "--concurrency" in sys.argv:
+        idx = sys.argv.index("--concurrency")
+        if idx + 1 < len(sys.argv):
+            config["concurrency"] = int(sys.argv[idx + 1])
+
     print(f"API: {config['api_base']}")
     print(f"Model: {config['model']}")
 

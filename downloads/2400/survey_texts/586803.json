@@ -1,0 +1,23 @@
+{
+  "has_license": "无",
+  "has_registration": "无",
+  "has_plate": "有",
+  "use_type": "非营运",
+  "has_key": "有",
+  "preview_location": "朝阳区东坝路李家坟5号祥龙博瑞集团二分公司东侧停车场",
+  "violation_count": 3,
+  "violation_points": 6,
+  "violation_fine": 300,
+  "is_mortgaged": "是",
+  "parking_fee": 1318,
+  "repair_fee": 10799,
+  "total_extra_fee": 12117,
+  "first_reg_date": "2021年4月9日",
+  "inspection_expiry": "2027年4月30日",
+  "vehicle_model": "SGM6521UBA1",
+  "fuel_type": "汽油",
+  "emission_standard": "国六",
+  "appraisal_price": 127916.5,
+  "deposit": 120000,
+  "mileage": ""
+}

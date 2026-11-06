@@ -1,0 +1,23 @@
+{
+  "has_license": "无",
+  "has_registration": "无",
+  "has_plate": "有",
+  "use_type": "非营运",
+  "has_key": "有",
+  "preview_location": "北京市延庆区人民法院执行局",
+  "violation_count": 1,
+  "violation_points": 1,
+  "violation_fine": 200,
+  "is_mortgaged": "否",
+  "parking_fee": 0,
+  "repair_fee": 0,
+  "total_extra_fee": 0,
+  "first_reg_date": "2017年11月06日",
+  "inspection_expiry": "2025年11月30日",
+  "vehicle_model": "JTMHU01J",
+  "fuel_type": "汽油",
+  "emission_standard": "国五",
+  "appraisal_price": 362630,
+  "deposit": 360000,
+  "mileage": ""
+}

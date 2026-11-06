@@ -3,7 +3,7 @@
 
   <view class="card intro-hero">
     <view class="intro-title">京慧车讯</view>
-    <view class="intro-sub">15 期真实成交数据 · 看清你的竞争位置 · 找到适合你的车</view>
+    <view class="intro-sub">历史成交数据 · 看清你的竞争位置 · 推荐本期好车</view>
     <view class="btn-primary" bindtap="goRank">立即查询我的排名</view>
     <button class="intro-share-btn" open-type="share">分享给朋友</button>
   </view>
@@ -28,17 +28,17 @@
       <text class="intro-step-no">3</text>
       <view class="intro-step-body">
         <view class="intro-step-name">选车辆</view>
-        <view class="intro-step-desc">4,334 台车源按品牌/燃料/证件/里程极速筛选，列表直览关键信息，不用逐台点开网页</view>
+        <view class="intro-step-desc">506 台本期在售车（202611期）按品牌/燃料/证件/里程极速筛选，列表直览关键信息，不用逐台点开网页</view>
       </view>
     </view>
   </view>
 
   <view class="card">
     <view class="card-title">数据说明</view>
-    <view class="intro-stat-row"><text class="intro-stat-label">覆盖期次</text><text class="intro-stat-val">16 期（202011 - 202611）</text></view>
-    <view class="intro-stat-row"><text class="intro-stat-label">历史样本</text><text class="intro-stat-val">199,554 条</text></view>
-    <view class="intro-stat-row"><text class="intro-stat-label">成交记录</text><text class="intro-stat-val">5,407 条</text></view>
-    <view class="intro-stat-row"><text class="intro-stat-label">车辆档案</text><text class="intro-stat-val">4,840 台（最新期含完整车况）</text></view>
+    <view class="intro-stat-row"><text class="intro-stat-label">本期在售</text><text class="intro-stat-val">506 台（202611期）</text></view>
+    <view class="intro-stat-row"><text class="intro-stat-label">排名资格池</text><text class="intro-stat-val">12,972 人（2400期）</text></view>
+    <view class="intro-stat-row"><text class="intro-stat-label">历史成交</text><text class="intro-stat-val">5,407 条（15 期）</text></view>
+    <view class="intro-stat-row"><text class="intro-stat-label">历史用途</text><text class="intro-stat-val">仅用于本期车型推荐</text></view>
   </view>
 
   <view class="intro-foot">数据整理自公开渠道的历史成交信息，仅供个人研究参考，不构成任何建议。</view>

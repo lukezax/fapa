@@ -1,0 +1,23 @@
+{
+  "has_license": "无",
+  "has_registration": "无",
+  "has_plate": "有",
+  "use_type": "非营运",
+  "has_key": "有",
+  "preview_location": "北京市昌平区学校后勤服务中心 (昌平区南郝庄路与南北庄路交叉口东380米)",
+  "violation_count": 4,
+  "violation_points": 4,
+  "violation_fine": 600,
+  "is_mortgaged": "否",
+  "parking_fee": "",
+  "repair_fee": "",
+  "total_extra_fee": 0,
+  "first_reg_date": "2019年04月09日",
+  "inspection_expiry": "2027年04月30日",
+  "vehicle_model": "SGM7205EAA2",
+  "fuel_type": "汽油",
+  "emission_standard": "国五",
+  "appraisal_price": 69247,
+  "deposit": 60000,
+  "mileage": ""
+}

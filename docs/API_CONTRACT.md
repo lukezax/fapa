@@ -1,6 +1,9 @@
-# 小程序 API 数据契约（v1）
+# 小程序 API 数据契约（v2）
 
 > 云函数与前端共享的唯一契约。前端调用云函数，云函数读写云数据库。任何字段修改须同步此文档。
+>
+> **202611 期（2464）调整**：`cars` 集合只存本期在售车辆（zcid=2464）；历史中拍（`winners`）
+> 与资格池（`pool_all`，仅 2400 期）只用于 `rank` 云函数的推荐，不再提供历史车辆列表。
 
 ## 1. 云函数调用约定
 
@@ -11,9 +14,9 @@
 
 | 集合 | 说明 | 关键索引 |
 |---|---|---|
-| `pool_all` | 全量资格池（精确排名）| `(zcid, times)`, `(zcid, times, reg_time)` 复合索引 |
-| `cars` | 跨期全部车辆 | `(zcid, final_price)`, `(zcid, brand)` |
-| `winners` | 中拍者画像（15 期 5407 条）| `result_zcid`, `price_bracket` |
+| `pool_all` | 排名资格池（仅最新期 2400，12,972 行）| `(zcid, times)`, `(zcid, times, reg_time)` 复合索引 |
+| `cars` | 本期在售车辆（仅 zcid=2464，506 行）| `(zcid, final_price)`, `(zcid, brand)` |
+| `winners` | 历史中拍者画像（331–2400 期，5,407 条，仅用于推荐）| `result_zcid`, `price_bracket` |
 | `favorites` | 收藏 | `openid` |
 | `histories` | 查询历史 | `openid` |
 
@@ -52,21 +55,23 @@
     matched_car: {car_name, car_link, final_price, bracket} | null
   }],
   latest_zcid: int,         // 排名统计所用的资格池最新期（pool_all，新期资格池发布前不随 cars 变）
-  current_zcid: int         // 车辆最新期（本期在售来源）
+  current_zcid: int,        // 本期在售期次（固定 2464）
+  current_period: string    // "202611期"
 }
 ```
 
 > 排名算法：`compute_rank` 在**资格池最新期**（`pool_all` 中 `zcid = latest_zcid`）内
 > count(`times > 输入`) + count(`times == 输入 AND reg_time < 输入`) + 1，与 webapp 一致。
-> `panorama[].current_cars`：本期（`current_zcid`）起拍价落在该档区间的在售车，按起拍价升序取 5 台。
+> `panorama[].current_cars`：本期（`current_zcid=2464`）起拍价落在该档区间的在售车，按起拍价升序取 5 台，
+> 每台带 `predicted_final_price`（= 起拍价 × 该档历史 `avg_deal_ratio`）。
+> `panorama[].top5 / all_matches` 为**历史成交参考**，仅用于解释推荐，不是可筛选列表。
 > 查询历史保存走 `histories` 云函数（见 3.5），rank 不再提供 `history` 方法。
 
-### 3.2 `cars` — 车辆筛选
+### 3.2 `cars` — 本期在售筛选（仅 zcid=2464）
 **方法 `list`**
 - 入参：
 ```
 {
-  zcid: string|null,        // null=全部期次，默认前端传最新期
   page: int,                // 1-based，默认 1
   pageSize: int,            // 默认 20，最大 50
   filters: {                // 全部可选
@@ -82,6 +87,8 @@
   dir: "asc"|"desc"         // 默认 "asc"；可空字段（mileage_km/violation_count）升序时 null 恒排最后
 }
 ```
+> `zcid` 参数已废弃：云函数固定 `zcid=2464`，前端无需传。
+
 - 出参：
 ```
 {
@@ -90,44 +97,48 @@
   pageSize: int,
   cars: [{
     car_link, car_name, zcid, period, item_no, court,
-    start_price, final_price, brand,
+    start_price, limit_price, final_price, brand,
     has_license, has_registration, has_plate, has_key, use_type,
     fuel_type, emission_standard, violation_count, violation_points, violation_fine,
     is_mortgaged, parking_fee, repair_fee, total_extra_fee, deposit,
     mileage_km, preview_location, first_reg_date, inspection_expiry, vehicle_model,
-    source: "detail"|"winner_only"
+    source: "detail"|"detail_partial"
   }],
   options: { brands: string[], courts: string[], fuel_types: string[], emissions: string[] },
-                          // 选项在与列表同一 zcid 范围内去重（只看最新期时选项也来自该期）
-  latest_zcid: int          // 后端确认的最新期
+  latest_zcid: int          // 固定 2464
 }
 ```
 
 **方法 `detail`**
 - 入参：`{ car_link: string }`
-- 出参：`{ car: {...单辆车完整字段}, winner: {winner_times, winner_rank, total_bidders, winner_reg_time, result_zcid} | null, is_favorite: bool }`
-  （`winner` 为联表 winners 的中拍信息；同一 car_link 跨期重复拍卖时优先取与车辆同 zcid 的记录）
+- 出参：`{ car: {...单辆车完整字段}, winner: {...} | null, is_favorite: bool }`
+  （只允许本期 `zcid=2464` 的车辆；历史 car_link 返回 404「车辆不存在或非本期在售」）
 
-**方法 `zcids`**（期次列表，供筛选页切换）
+**方法 `zcids`**（兼容保留）
 - 入参：`{}`
-- 出参：`{ zcids: [{zcid: int, period: string, count: int}], latest: int }`
+- 出参：`{ zcids: [{zcid: 2464, period: "202611期", count: int}], latest: 2464 }`（恒为单元素）
 
-### 3.3 `trends` — 画像/趋势
+### 3.3 `trends` — 本期在售分析（仅 zcid=2464）
 **方法 `overview`**
 - 入参：`{}`
 - 出参：
 ```
 {
-  bracket_times: [{ bracket: string, avg_times: float, median_times: float, min_times: int, max_times: int, count: int }],
-                          // 价格档位 × 中拍摇号次数（均值/中位数/最低/最高/样本数）
-  bracket_dist: [{ bracket: string, count: int }],
-  brand_top: [{ brand: string, count: int }],
-  times_dist: [{ range: string, count: int }],   // 0-9,10-19,…,70-79,80+（共9档，最大80）
-  times_median: float,                           // 中拍者次数中位数
-  times_ge80_pct: float,                         // 次数 ≥80 的中拍者占比
-  stats: { periods: int, cars: int, winners: int }   // 数据概览
+  current_zcid: int,                // 2464
+  current_period: string,           // "202611期"
+  total: int,                       // 本期在售台数
+  brand_top: [{ brand: string, count: int }],        // 本期
+  court_top: [{ court: string, count: int }],        // 本期
+  fuel_dist: [{ fuel_type: string, count: int }],    // 本期
+  emission_dist: [{ emission: string, count: int }], // 本期
+  price_dist: [{ bracket: string, count: int }],     // 起拍价 5 万档（本期）
+  mileage_dist: [{ range: string, count: int }],     // 0-5万,…,30万+（本期）
+  condition: { total, no_license, no_registration, no_plate, no_key,
+               mortgaged, with_mileage, avg_extra_fee },
+  history: { periods: int, winners: int, pool: int } // 历史推荐依据概览（仅数量）
 }
 ```
+> 历史中拍统计（bracket_times / times_dist 等）已下线；历史数据只服务于 `rank` 的推荐。
 
 ### 3.4 `favorites` — 收藏
 | 方法 | 入参 | 出参 |

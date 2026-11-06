@@ -1,0 +1,23 @@
+{
+  "has_license": "无",
+  "has_registration": "无",
+  "has_plate": "有",
+  "use_type": "非运营",
+  "has_key": "有",
+  "preview_location": "北京市密云区蔡家洼停车场",
+  "violation_count": 0,
+  "violation_points": 0,
+  "violation_fine": 0,
+  "is_mortgaged": "是",
+  "parking_fee": "",
+  "repair_fee": "",
+  "total_extra_fee": 3750,
+  "first_reg_date": "2014/9/1",
+  "inspection_expiry": "2022/9/30",
+  "vehicle_model": "WAURGB4H",
+  "fuel_type": "汽油",
+  "emission_standard": "国五",
+  "appraisal_price": 91100,
+  "deposit": 90000,
+  "mileage": ""
+}

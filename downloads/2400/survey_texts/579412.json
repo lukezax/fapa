@@ -1,0 +1,23 @@
+{
+  "has_license": "无",
+  "has_registration": "无",
+  "has_plate": "有",
+  "use_type": "非营运",
+  "has_key": "有",
+  "preview_location": "北京市海淀区东北旺南路33号百旺绿荫停车场",
+  "violation_count": 0,
+  "violation_points": 0,
+  "violation_fine": 0,
+  "is_mortgaged": "否",
+  "parking_fee": 2430,
+  "repair_fee": 3102,
+  "total_extra_fee": 5532,
+  "first_reg_date": "2017年9月8日",
+  "inspection_expiry": "2027年9月30日",
+  "vehicle_model": "SVW71612KH",
+  "fuel_type": "汽油",
+  "emission_standard": "国五",
+  "appraisal_price": 25015.5,
+  "deposit": 20000,
+  "mileage": ""
+}

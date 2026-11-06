@@ -1,0 +1,23 @@
+{
+  "has_license": "无",
+  "has_registration": "有",
+  "has_plate": "有",
+  "use_type": "非营运",
+  "has_key": "有",
+  "preview_location": "北京市海淀区东北旺南路33号百旺绿荫停车场",
+  "violation_count": 2,
+  "violation_points": 1,
+  "violation_fine": 400,
+  "is_mortgaged": "是",
+  "parking_fee": 4320,
+  "repair_fee": 16956,
+  "total_extra_fee": 21276,
+  "first_reg_date": "2014年8月29日",
+  "inspection_expiry": "2022年8月31日",
+  "vehicle_model": "BJ6453E4A",
+  "fuel_type": "汽油",
+  "emission_standard": "国五",
+  "appraisal_price": 48756,
+  "deposit": 40000,
+  "mileage": ""
+}

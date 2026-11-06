@@ -1,0 +1,23 @@
+{
+  "has_license": "无",
+  "has_registration": "无",
+  "has_plate": "有",
+  "use_type": "非营运",
+  "has_key": "有",
+  "preview_location": "北京市延庆区康庄镇天佑路 7号执行局院内停车场",
+  "violation_count": 11,
+  "violation_points": 9,
+  "violation_fine": 1900,
+  "is_mortgaged": "是",
+  "parking_fee": "",
+  "repair_fee": "",
+  "total_extra_fee": 0,
+  "first_reg_date": "2022年03月15日",
+  "inspection_expiry": "2024年03月31日",
+  "vehicle_model": "MMFTA840",
+  "fuel_type": "汽油",
+  "emission_standard": "国六",
+  "appraisal_price": 351097.5,
+  "deposit": 350000,
+  "mileage": ""
+}

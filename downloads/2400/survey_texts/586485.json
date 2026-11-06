@@ -1,0 +1,23 @@
+{
+  "has_license": "无",
+  "has_registration": "无",
+  "has_plate": "有",
+  "use_type": "非营运",
+  "has_key": "无",
+  "preview_location": "朝阳区东坝路李家坟5号祥龙博瑞集团二分公司东侧停车场",
+  "violation_count": 2,
+  "violation_points": 0,
+  "violation_fine": 100,
+  "is_mortgaged": "是",
+  "parking_fee": 1318,
+  "repair_fee": 14224,
+  "total_extra_fee": 15542,
+  "first_reg_date": "2016年1月12日",
+  "inspection_expiry": "2026年1月31日",
+  "vehicle_model": "WDCDA6CB",
+  "fuel_type": "汽油",
+  "emission_standard": "国五",
+  "appraisal_price": 153453.5,
+  "deposit": 150000,
+  "mileage": ""
+}

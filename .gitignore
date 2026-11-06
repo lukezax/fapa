@@ -1,5 +1,9 @@
-# 爬取的原始数据（4.5G，含 20 万人资格池信息，不入库）
-downloads/
+# 爬取的大体积原始缓存（图片/页面快照/本地备份），不入库
+downloads/*/car_images/
+downloads/*/detail/
+downloads/*/detail_pages/
+downloads/*.bak*/
+downloads/**/page.html
 
 # 工具与缓存
 .codegraph/
@@ -12,3 +16,6 @@ node_modules/
 # 系统文件
 .DS_Store
 Thumbs.db
+
+# PDF 解析中间产物（span/layout/origin，超 GitHub 100MB 限制）
+downloads/*/gsxx_*/

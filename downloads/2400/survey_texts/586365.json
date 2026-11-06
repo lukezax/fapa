@@ -1,0 +1,23 @@
+{
+  "has_license": "无",
+  "has_registration": "无",
+  "has_plate": "有",
+  "use_type": "非营运",
+  "has_key": "有",
+  "preview_location": "顺交机动车停车场",
+  "violation_count": 1,
+  "violation_points": 6,
+  "violation_fine": 200,
+  "is_mortgaged": "是",
+  "parking_fee": 8018,
+  "repair_fee": 3280,
+  "total_extra_fee": 11298,
+  "first_reg_date": "2016年6月17日",
+  "inspection_expiry": "2026年6月30日",
+  "vehicle_model": "BH7142GAZ",
+  "fuel_type": "汽油",
+  "emission_standard": "国五",
+  "appraisal_price": 20800,
+  "deposit": 20000,
+  "mileage": ""
+}

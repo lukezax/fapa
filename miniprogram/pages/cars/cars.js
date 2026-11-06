@@ -1,5 +1,5 @@
-// pages/cars/cars.js — 车辆筛选列表页
-const { DEFAULT_BRANDS, FUEL_TYPES, EMISSIONS, PAGE_SIZE } = require('../../utils/constants');
+// pages/cars/cars.js — 本期在售车辆筛选列表页（固定 202611期 / 2464）
+const { CURRENT_ZCID, DEFAULT_BRANDS, FUEL_TYPES, EMISSIONS, PAGE_SIZE } = require('../../utils/constants');
 const { toWan, formatViolation, formatPeriod } = require('../../utils/format');
 const { AD_UNITS } = require('../../utils/ad');
 
@@ -34,7 +34,7 @@ function defaultSegments() {
 
 Page({
   data: {
-    currentZcid: null,
+    currentZcid: CURRENT_ZCID,
     filterOpen: false,
     filters: defaultFilters(),
     segments: defaultSegments(),
@@ -62,8 +62,7 @@ Page({
 
   onLoad() {
     this._reqSeq = 0;
-    // 并行：期次 chips + 列表第 1 页
-    this.fetchZcids();
+    // 只展示本期在售车辆（历史数据仅用于排名页推荐）
     this.fetchList(1);
   },
 
@@ -74,21 +73,6 @@ Page({
   onReachBottom() {
     if (this.data.loading || this.data.loadingMore || this.data.noMore) return;
     this.fetchList(this.data.page + 1);
-  },
-
-  // 期次 chips（默认选中 latest，随后按 latest 重查第 1 页）
-  // 只展示最新一期的车（历史期次仅用于推荐与分析）
-  fetchZcids() {
-    const app = getApp();
-    return app.callFunction('cars', { method: 'zcids' })
-      .then(res => {
-        const latest = res.latest || null;
-        this.setData({ currentZcid: latest });
-        if (latest !== null) this.fetchList(1);
-      })
-      .catch(err => {
-        wx.showToast({ title: err.message || '期次加载失败', icon: 'none' });
-      });
   },
 
   // 拉取列表（page 1 覆盖，page>1 追加）；seq 防旧请求覆盖新结果

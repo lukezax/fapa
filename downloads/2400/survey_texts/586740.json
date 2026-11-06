@@ -1,0 +1,23 @@
+{
+  "has_license": "无",
+  "has_registration": "无",
+  "has_plate": "有",
+  "use_type": "非营运",
+  "has_key": "有",
+  "preview_location": "朝阳区东坝路李家坟5号祥龙博瑞集团二分公司东侧停车场",
+  "violation_count": 18,
+  "violation_points": 17,
+  "violation_fine": 2320,
+  "is_mortgaged": "否",
+  "parking_fee": 1318,
+  "repair_fee": 60380,
+  "total_extra_fee": 61698,
+  "first_reg_date": "2011年6月23日",
+  "inspection_expiry": "2024年6月30日",
+  "vehicle_model": "JTEGS21H",
+  "fuel_type": "汽油",
+  "emission_standard": "国四",
+  "appraisal_price": 124647.5,
+  "deposit": 120000,
+  "mileage": ""
+}

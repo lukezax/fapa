@@ -1,0 +1,23 @@
+{
+  "has_license": "无",
+  "has_registration": "无",
+  "has_plate": "有",
+  "use_type": "非营运",
+  "has_key": "有",
+  "preview_location": "北京市通州区麦庄桥东北（麦庄东路）",
+  "violation_count": 0,
+  "violation_points": 0,
+  "violation_fine": 0,
+  "is_mortgaged": "否",
+  "parking_fee": "",
+  "repair_fee": "",
+  "total_extra_fee": 13148,
+  "first_reg_date": "2018年8月17日",
+  "inspection_expiry": "2026年8月31日",
+  "vehicle_model": "SVW71617LM",
+  "fuel_type": "汽油",
+  "emission_standard": "国五",
+  "appraisal_price": 20500,
+  "deposit": 20000,
+  "mileage": ""
+}

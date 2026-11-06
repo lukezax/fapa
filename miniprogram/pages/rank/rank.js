@@ -210,6 +210,7 @@ Page({
       car_name: c.car_name,
       car_link: c.car_link,
       start_text: toWan(c.start_price),
+      pred_text: c.predicted_final_price ? '预计 ' + toWan(c.predicted_final_price) : '',
       meta: [c.fuel_type, c.mileage_km ? (c.mileage_km / 10000).toFixed(1) + '万km' : '']
         .filter(Boolean).join(' · ')
     }));

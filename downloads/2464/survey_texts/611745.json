@@ -1,0 +1,23 @@
+{
+  "has_license": "有",
+  "has_registration": "有",
+  "has_plate": "有",
+  "use_type": "非营运",
+  "has_key": "有",
+  "preview_location": "朝阳区东坝路李家坟 5 号祥龙博瑞集团二分公司东侧停车场",
+  "violation_count": 11,
+  "violation_points": 8,
+  "violation_fine": 1900,
+  "is_mortgaged": "否",
+  "parking_fee": "",
+  "repair_fee": "",
+  "total_extra_fee": 17176,
+  "first_reg_date": "2024年03月07日",
+  "inspection_expiry": "2026年03月31日",
+  "vehicle_model": "BJ7001A619BEV",
+  "fuel_type": "电",
+  "emission_standard": "国三",
+  "appraisal_price": 100200,
+  "deposit": 100000,
+  "mileage": ""
+}

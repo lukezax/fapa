@@ -55,17 +55,20 @@ def run_step(step_num, description, cmd, skip=False):
 
 def main():
     if len(sys.argv) < 2:
-        print("用法: python3 tools/run_pipeline.py <zcid> [--skip-vlm] [--only-b]")
+        print("用法: python3 tools/run_pipeline.py <zcid> [--skip-vlm] [--only-b] [--pre-auction]")
         print()
         print("示例:")
         print("  python3 tools/run_pipeline.py 2500")
         print("  python3 tools/run_pipeline.py 2500 --skip-vlm")
         print("  python3 tools/run_pipeline.py 2500 --only-b")
+        print("  python3 tools/run_pipeline.py 2464 --pre-auction   # 竞价开始前：标的+车况+里程")
         sys.exit(1)
 
     zcid = sys.argv[1]
     skip_vlm = "--skip-vlm" in sys.argv
     only_b = "--only-b" in sys.argv
+    # 竞价开始前：成交结果与资格池尚未发布，只跑 标的列表 + Pipeline B
+    pre_auction = "--pre-auction" in sys.argv
 
     print(f"处理期次: {zcid}")
     print(f"选项: skip_vlm={skip_vlm}, only_b={only_b}")
@@ -75,7 +78,7 @@ def main():
     total_count = 0
 
     # Pipeline A: 竞拍排名分析
-    if not only_b:
+    if not only_b and not pre_auction:
         print(f"\n{'#'*60}")
         print(f"# Pipeline A: 竞拍排名分析")
         print(f"{'#'*60}")
@@ -114,6 +117,13 @@ def main():
     print(f"\n{'#'*60}")
     print(f"# Pipeline B: 车辆详情筛选")
     print(f"{'#'*60}")
+
+    # Step 5.5: 竞价前标的列表（download_projects）
+    if pre_auction:
+        total_count += 1
+        if run_step(5.5, "下载本期标的列表 (download_projects.py)",
+                    ["python3", "tools/download_projects.py", zcid]):
+            success_count += 1
 
     # Step 6: 下载车辆调查情况表
     total_count += 1

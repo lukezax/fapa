@@ -1,0 +1,23 @@
+{
+  "has_license": "无",
+  "has_registration": "无",
+  "has_plate": "有",
+  "use_type": "非营运",
+  "has_key": "有",
+  "preview_location": "朝阳区东坝路李家坟5号祥龙博瑞集团二分公司东侧停车场",
+  "violation_count": 2,
+  "violation_points": 4,
+  "violation_fine": 300,
+  "is_mortgaged": "否",
+  "parking_fee": "",
+  "repair_fee": "",
+  "total_extra_fee": 8240,
+  "first_reg_date": "2017年1月12日",
+  "inspection_expiry": "2025年1月31日",
+  "vehicle_model": "5LMCJ3DN",
+  "fuel_type": "汽油",
+  "emission_standard": "国五",
+  "appraisal_price": 45692,
+  "deposit": 40000,
+  "mileage": ""
+}

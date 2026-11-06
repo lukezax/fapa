@@ -298,6 +298,15 @@
 }
 
 /* ---------- 车辆行（top5 / 期次趋势共用） ---------- */
+/* 历史成交参考行：不可点击 */
+.rank-car-row-static {
+  opacity: 0.75;
+}
+
+.rank-car-row-static .rank-car-arrow {
+  display: none;
+}
+
 .rank-car-row {
   display: flex;
   align-items: center;

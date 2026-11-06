@@ -1,0 +1,23 @@
+{
+  "has_license": "有",
+  "has_registration": "有",
+  "has_plate": "有",
+  "use_type": "非营运",
+  "has_key": "有",
+  "preview_location": "朝阳区东坝路李家坟5号祥龙博瑞集团二分公司东侧停车场",
+  "violation_count": 7,
+  "violation_points": 8,
+  "violation_fine": 1050,
+  "is_mortgaged": "否",
+  "parking_fee": 1590,
+  "repair_fee": 6991,
+  "total_extra_fee": 8581,
+  "first_reg_date": "2010年3月25日",
+  "inspection_expiry": "2024年3月31日",
+  "vehicle_model": "HG7203AB",
+  "fuel_type": "汽油",
+  "emission_standard": "国四",
+  "appraisal_price": 20000,
+  "deposit": 20000,
+  "mileage": ""
+}

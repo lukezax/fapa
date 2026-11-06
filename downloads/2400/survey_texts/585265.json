@@ -1,0 +1,23 @@
+{
+  "has_license": "无",
+  "has_registration": "无",
+  "has_plate": "有",
+  "use_type": "非运营",
+  "has_key": "有",
+  "preview_location": "北京市通州区麦庄桥东北（麦庄东路）",
+  "violation_count": 25,
+  "violation_points": 7,
+  "violation_fine": 3300,
+  "is_mortgaged": "是",
+  "parking_fee": "",
+  "repair_fee": "",
+  "total_extra_fee": 3260,
+  "first_reg_date": "2015/2/5",
+  "inspection_expiry": "2025/2/28",
+  "vehicle_model": "WVGAB97P",
+  "fuel_type": "汽油",
+  "emission_standard": "国五",
+  "appraisal_price": 64902.0,
+  "deposit": 60000.0,
+  "mileage": ""
+}

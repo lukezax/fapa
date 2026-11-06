@@ -1,0 +1,23 @@
+{
+  "has_license": "无",
+  "has_registration": "有",
+  "has_plate": "有",
+  "use_type": "非营运",
+  "has_key": "有",
+  "preview_location": "北京市密云区蔡家洼停车场",
+  "violation_count": 3,
+  "violation_points": 0,
+  "violation_fine": 0,
+  "is_mortgaged": "是",
+  "parking_fee": "",
+  "repair_fee": "",
+  "total_extra_fee": 0,
+  "first_reg_date": "2017/8/7",
+  "inspection_expiry": "2025/8/31",
+  "vehicle_model": "FV7251FBCBG",
+  "fuel_type": "汽油",
+  "emission_standard": "国五",
+  "appraisal_price": 170400.0,
+  "deposit": 170000.0,
+  "mileage": ""
+}

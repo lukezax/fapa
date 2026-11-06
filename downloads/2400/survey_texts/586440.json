@@ -1,0 +1,23 @@
+{
+  "has_license": "无",
+  "has_registration": "无",
+  "has_plate": "有",
+  "use_type": "非营运",
+  "has_key": "有",
+  "preview_location": "北京市昌平法院执行局南侧停车场",
+  "violation_count": 0,
+  "violation_points": 0,
+  "violation_fine": 0,
+  "is_mortgaged": "否",
+  "parking_fee": "",
+  "repair_fee": "",
+  "total_extra_fee": 600,
+  "first_reg_date": "2018-05-04",
+  "inspection_expiry": "2024-05-31",
+  "vehicle_model": "MMFLS440",
+  "fuel_type": "汽油",
+  "emission_standard": "国五",
+  "appraisal_price": 184142.5,
+  "deposit": 180000,
+  "mileage": ""
+}

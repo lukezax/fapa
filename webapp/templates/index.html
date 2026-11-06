@@ -199,6 +199,13 @@
 
   .matches-list { display: none; margin-top: 8px; }
   .matches-list.open { display: block; }
+
+  .current-cars { margin-top: 12px; border-top: 1px dashed #e5e7eb; padding-top: 10px; }
+  .current-cars-title { font-size: 12px; font-weight: 600; color: #c0392b; margin-bottom: 6px; }
+  .current-car-item { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 13px; }
+  .current-car-item .meta { color: #8a8a9a; white-space: nowrap; }
+  .current-car-item a { color: #2c3e50; text-decoration: none; }
+  .current-car-item a:hover { text-decoration: underline; }
   .match-item {
     display: flex; justify-content: space-between; align-items: center;
     padding: 5px 0 5px 8px; border-bottom: 1px solid #f0f0f0; font-size: 12px;
@@ -296,6 +303,7 @@
         <select id="brandFilter" onchange="applyFilters()">
           <option value="">全部品牌</option>
         </select>
+        <a href="/cars" style="margin-left:auto; font-size:13px; color:#c0392b; text-decoration:none;">筛选本期全部在售车辆 →</a>
       </div>
       <div id="cardsContainer"></div>
     </div>
@@ -443,7 +451,10 @@ function renderHero(data) {
     '<div class="hero-pct">前 ' + data.user_pct + '%</div>' +
     '<div class="hero-matches">共匹配到 ' + fmtNum(data.total_matches) + ' 辆历史中拍</div>' +
     minPriceHtml +
-    '<div class="hero-hint">匹配策略: 在历史各期中找到排名百分比前 ' + data.user_pct + '% 附近的中拍者</div>';
+    '<div class="hero-hint">匹配策略: 在历史各期中找到排名百分比前 ' + data.user_pct + '% 附近的中拍者，'
+    + '并对应到 ' + (data.current_period || '本期') + ' 在售车辆</div>'
+    + '<div class="hero-hint" style="margin-top:4px;">资格池: ' + fmtNum(data.total) + ' 人（'
+    + data.latest_zcid + '期）· 本期在售按 ' + data.current_zcid + ' 期计算</div>';
 }
 
 // ═══════════════════════════════════════════════
@@ -539,7 +550,7 @@ function renderCard(r, idx) {
   var top5Html = '';
   var top5Keys = {};
   if (r.top5 && r.top5.length > 0) {
-    top5Html = '<table class="top5-table"><thead><tr><th style="width:24px;">#</th><th>车型</th><th style="text-align:right;">成交价</th><th style="text-align:right; width:72px;">排位</th><th style="width:56px;">期次</th></tr></thead><tbody>';
+    top5Html = '<table class="top5-table"><thead><tr><th style="width:24px;">#</th><th>车型（历史成交参考）</th><th style="text-align:right;">成交价</th><th style="text-align:right; width:72px;">排位</th><th style="width:56px;">期次</th></tr></thead><tbody>';
     for (var i = 0; i < r.top5.length; i++) {
       var m = r.top5[i];
       top5Keys[m.car_name + '|' + m.result_zcid] = true;
@@ -580,6 +591,22 @@ function renderCard(r, idx) {
 
   var cardId = bracketSlug(r.bracket);
 
+  // 本期在售（202611期）
+  var currentHtml = '';
+  if (r.current_cars && r.current_cars.length > 0) {
+    currentHtml += '<div class="current-cars"><div class="current-cars-title">本期在售 ' + r.current_period + ' · 起拍价最低 ' + r.current_cars.length + ' 台</div>';
+    for (var ci = 0; ci < r.current_cars.length; ci++) {
+      var cc = r.current_cars[ci];
+      var predText = cc.predicted_final_price ? ' · 预计 ' + fmtPrice(cc.predicted_final_price) : '';
+      var kmText = cc.mileage ? ' · ' + (cc.mileage / 10000).toFixed(1) + '万km' : '';
+      currentHtml += '<div class="current-car-item">' +
+        '<a href="' + cc.car_link + '" target="_blank" rel="noopener">' + cc.car_name + '</a>' +
+        '<span class="meta">起 ' + fmtPrice(cc.start_price) + predText + kmText + '</span>' +
+        '</div>';
+    }
+    currentHtml += '</div>';
+  }
+
   return '<div class="detail-card ' + borderCls + '" id="' + cardId + '">' +
     '<div class="detail-header">' +
       medal +
@@ -592,6 +619,7 @@ function renderCard(r, idx) {
       '<span>均价 <strong>' + fmtPrice(r.avg_final_price) + '</strong></span>' +
       '<span>15期中有 <strong>' + r.periods_covered + ' 期</strong>在此档位成交</span>' +
     '</div>' +
+    currentHtml +
     top5Html +
     matchesHtml +
     '</div>';

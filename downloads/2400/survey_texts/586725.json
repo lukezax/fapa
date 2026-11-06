@@ -1,0 +1,23 @@
+{
+  "has_license": "无",
+  "has_registration": "无",
+  "has_plate": "有",
+  "use_type": "非营运",
+  "has_key": "无",
+  "preview_location": "朝阳区东坝路李家坟5号祥龙博瑞集团二分公司东侧停车场",
+  "violation_count": 9,
+  "violation_points": 10,
+  "violation_fine": 1100,
+  "is_mortgaged": "是",
+  "parking_fee": "",
+  "repair_fee": "",
+  "total_extra_fee": 21371,
+  "first_reg_date": "2020年07月07日",
+  "inspection_expiry": "2026年07月31日",
+  "vehicle_model": "FA6543M",
+  "fuel_type": "汽油",
+  "emission_standard": "国六",
+  "appraisal_price": 159956.5,
+  "deposit": 150000,
+  "mileage": ""
+}

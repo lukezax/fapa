@@ -117,7 +117,7 @@
           </view>
         </view>
 
-        <!-- 本期在售（起拍价最低优先） -->
+        <!-- 本期在售（起拍价最低优先，可点进详情） -->
         <view class="rank-bk-current" wx:if="{{bk.currentCars.length}}">
           <view class="rank-bk-top5-title">本期在售 · 起拍价最低 {{bk.currentCars.length}} 台</view>
           <view class="rank-car-row" wx:for="{{bk.currentCars}}" wx:for-item="m" wx:key="car_link"
@@ -125,6 +125,7 @@
             <text class="rank-car-name">{{m.car_name}}</text>
             <text class="rank-car-times" wx:if="{{m.meta}}">{{m.meta}}</text>
             <text class="rank-car-price">起 {{m.start_text}}</text>
+            <text class="rank-car-times" wx:if="{{m.pred_text}}">{{m.pred_text}}</text>
             <text class="rank-car-arrow">›</text>
           </view>
         </view>
@@ -136,15 +137,14 @@
           </view>
         </view>
 
+        <!-- 历史成交参考：不可点击，仅用于说明推荐依据 -->
         <view class="rank-bk-top5" wx:if="{{bk.top5.length}}">
-          <view class="rank-bk-top5-title">历史成交 · 最便宜 5 台</view>
-          <view class="rank-car-row" wx:for="{{bk.top5}}" wx:for-item="m" wx:key="car_link"
-            bindtap="onCarTap" data-link="{{m.car_link}}">
+          <view class="rank-bk-top5-title">历史成交参考 · 同排位最便宜 5 台</view>
+          <view class="rank-car-row rank-car-row-static" wx:for="{{bk.top5}}" wx:for-item="m" wx:key="car_link">
             <text class="rank-car-name">{{m.car_name}}</text>
             <text class="rank-car-times">{{m.times_text}}</text>
             <text class="rank-car-price">{{m.final_price_text}}</text>
             <text class="rank-car-zcid">{{m.result_zcid}}</text>
-            <text class="rank-car-arrow">›</text>
           </view>
         </view>
       </view>

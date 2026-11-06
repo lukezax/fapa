@@ -1,0 +1,23 @@
+{
+  "has_license": "无",
+  "has_registration": "无",
+  "has_plate": "无",
+  "use_type": "非运营",
+  "has_key": "有",
+  "preview_location": "北京市通州区麦庄桥东北（麦庄东路）",
+  "violation_count": 32,
+  "violation_points": 15,
+  "violation_fine": 3900,
+  "is_mortgaged": "是",
+  "parking_fee": "",
+  "repair_fee": "",
+  "total_extra_fee": 13930,
+  "first_reg_date": "2013/11/15",
+  "inspection_expiry": "2024/11/30",
+  "vehicle_model": "1C4RJFJG",
+  "fuel_type": "汽油",
+  "emission_standard": "国五",
+  "appraisal_price": 59535,
+  "deposit": 50000,
+  "mileage": ""
+}

@@ -26,93 +26,11 @@ from collections import OrderedDict
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOWNLOADS_DIR = os.path.join(BASE_DIR, "downloads")
 
-# ── 品牌提取表（与 webapp/app.py KNOWN_BRANDS 对齐：含车型级词条）──
-KNOWN_BRANDS = [
-    "梅赛德斯-奔驰", "梅赛德斯奔驰", "奔驰", "宝马", "MINI", "迷你",
-    "奥迪", "大众汽车", "大众", "丰田", "本田", "别克", "北京现代", "现代",
-    "福特", "日产", "东风日产", "尼桑", "沃尔沃",
-    "保时捷", "路虎", "揽胜运动", "揽胜", "捷豹",
-    "雷克萨斯", "凯迪拉克", "雪佛兰", "标致", "雪铁龙",
-    "马自达", "起亚", "三菱", "斯巴鲁", "英菲尼迪", "讴歌",
-    "红旗", "比亚迪", "蔚来", "小鹏", "理想", "特斯拉", "拓速乐",
-    "长安", "长城", "哈弗", "魏派", "WEY", "吉利", "领克",
-    "奇瑞", "江淮", "奔腾", "中华", "荣威", "名爵", "传祺",
-    "五菱", "宝骏", "东风", "一汽", "北汽", "北京汽车", "北京", "绅宝",
-    "DS", "smart",
-    "劳斯莱斯", "宾利", "法拉利", "玛莎拉蒂", "阿斯顿马丁", "迈凯伦",
-    "帕纳美拉", "埃尔法", "皇冠",
-    "霸道", "酷路泽", "陆地巡洋舰", "巡洋舰",
-    "神行者", "发现", "极光", "牧马人", "大切诺基", "指南者", "大捷龙",
-    "萨博", "欧宝", "金龙", "金杯", "福田", "新凯",
-    "北斗星", "天籁", "夏利", "思威", "帕萨特", "宝来",
-    "福克斯", "波罗", "捷达", "桑塔纳", "朗逸", "速腾",
-    "迈腾", "高尔夫", "途观", "途安", "途锐", "辉腾",
-    "凯越", "英朗", "君威", "君越", "林荫大道",
-    "雅阁", "飞度", "锋范", "思域", "奥德赛",
-    "凯美瑞", "卡罗拉", "汉兰达", "普拉多",
-    "骐达", "轩逸", "逍客", "奇骏",
-    "赛欧", "科鲁兹", "迈锐宝", "探界者", "昂科雷",
-    "索纳塔", "伊兰特", "途胜",
-    "胜达", "唯雅诺", "弈鸥", "凯尊", "凯宴", "博斯特", "迈凯",
-    "索兰托", "傲虎", "森林人", "欧蓝德", "迈特威",
-    "BMW", "尼桑",
-]
-
-# ── 品牌归一化（webapp BRAND_NORMALIZE 拉平映射链 + 合并重复项）──
-BRAND_NORMALIZE = {
-    "大众汽车": "大众",
-    "梅赛德斯奔驰": "梅赛德斯-奔驰",
-    "奔驰": "梅赛德斯-奔驰",
-    "唯雅诺": "梅赛德斯-奔驰",
-    "北京汽车": "北京",
-    "北京现代": "现代",
-    "迷你": "MINI",
-    "东风日产": "日产",
-    "尼桑": "日产",
-    "揽胜运动": "路虎",
-    "揽胜": "路虎",
-    "神行者": "路虎",
-    "发现": "路虎",
-    "极光": "路虎",
-    "陆地巡洋舰": "丰田", "巡洋舰": "丰田", "酷路泽": "丰田",
-    "霸道": "丰田", "普拉多": "丰田", "凯美瑞": "丰田", "卡罗拉": "丰田",
-    "汉兰达": "丰田", "RAV4": "丰田", "埃尔法": "丰田", "皇冠": "丰田",
-    "雅阁": "本田", "思域": "本田", "CR-V": "本田", "奥德赛": "本田",
-    "飞度": "本田", "锋范": "本田", "思威": "本田",
-    "帕萨特": "大众", "迈腾": "大众", "速腾": "大众", "朗逸": "大众",
-    "高尔夫": "大众", "途观": "大众", "途安": "大众", "途锐": "大众",
-    "辉腾": "大众", "宝来": "大众", "捷达": "大众", "桑塔纳": "大众",
-    "波罗": "大众", "迈特威": "大众", "弈鸥": "大众",
-    "福克斯": "福特",
-    "BMW": "宝马",
-    "天籁": "日产", "轩逸": "日产", "骐达": "日产", "逍客": "日产", "奇骏": "日产",
-    "凯越": "别克", "英朗": "别克", "君威": "别克", "君越": "别克",
-    "GL8": "别克", "林荫大道": "别克", "昂科雷": "别克",
-    "赛欧": "雪佛兰", "科鲁兹": "雪佛兰", "迈锐宝": "雪佛兰", "探界者": "雪佛兰",
-    "索纳塔": "现代", "伊兰特": "现代", "途胜": "现代", "ix35": "现代", "胜达": "现代",
-    "索兰托": "起亚", "凯尊": "起亚",
-    "牧马人": "Jeep", "大切诺基": "Jeep", "指南者": "Jeep",
-    "大捷龙": "克莱斯勒",
-    "欧蓝德": "三菱", "傲虎": "斯巴鲁", "森林人": "斯巴鲁",
-    "拓速乐": "特斯拉",
-    "凯宴": "保时捷", "博斯特": "保时捷", "帕纳美拉": "保时捷", "迈凯": "保时捷",
-}
-
-
-def extract_brand(car_name):
-    """从车名提取品牌（与 webapp/app.py 逻辑一致：先剥车牌号，再按长度优先匹配已知品牌）"""
-    name = (car_name or "").strip()
-    # Case 1: 车名含「牌」→ 提取车牌号与「牌」之间的品牌词
-    m = re.search(r"(?:车牌号为)?京[0-9A-Za-z]+([\u4e00-\u9fffA-Za-z-]+)牌", name)
-    if m:
-        b = m.group(1).strip()
-        if b and len(b) <= 20:
-            return BRAND_NORMALIZE.get(b, b)
-    # Case 2: 已知品牌按长度优先匹配
-    for b in sorted(KNOWN_BRANDS, key=len, reverse=True):
-        if b in name:
-            return BRAND_NORMALIZE.get(b, b)
-    return "其他"
+# ── 品牌提取（唯一实现在 tools/brand.py，webapp 与导入工具共用）──
+try:
+    from tools.brand import extract_brand  # 以项目根目录运行时
+except ImportError:  # 以 tools/ 为脚本目录直接运行时
+    from brand import extract_brand
 
 
 def normalize_fuel(val):
@@ -236,9 +154,9 @@ def build_winners(zcids, out_dir):
 # ══════════════════════════════════════════════
 # 3. cars — 跨期全部车辆
 # ══════════════════════════════════════════════
-def build_cars(zcids, out_dir):
-    """合并各期 result_detail + car_details_llm + mileage（按 car_link）。
-    历史期次无详情时，从 winners 生成 source=winner_only 的占位记录。"""
+def build_cars(zcids, out_dir, include_winner_only=False):
+    """合并各期 result_detail + car_details_llm + mileage + limit_prices（按 car_link）。
+    默认只写当前期；历史期次仅在 include_winner_only=True 时从 winners 生成占位记录。"""
     zcids = set(int(z) for z in zcids)
     out = os.path.join(out_dir, "cars.jsonl")
     written_links = set()
@@ -256,11 +174,13 @@ def build_cars(zcids, out_dir):
             detail_csv = os.path.join(d, "result_detail.csv")
             llm_csv = os.path.join(d, "car_details_llm.csv")
             mileage_csv = os.path.join(d, "mileage.csv")
+            limit_csv = os.path.join(d, "limit_prices.csv")
 
-            # 读三表
+            # 读四表
             details = _read_csv_dict(detail_csv)
             llms = {r["car_link"]: r for r in _read_csv_dict(llm_csv)}
             mileages = {r["car_link"]: r for r in _read_csv_dict(mileage_csv)}
+            limits = {r["car_link"]: r for r in _read_csv_dict(limit_csv)}
 
             for row in details:
                 link = row.get("car_link", "")
@@ -268,6 +188,7 @@ def build_cars(zcids, out_dir):
                     continue
                 llm = llms.get(link, {})
                 ml = mileages.get(link, {})
+                lm = limits.get(link, {})
                 car_name = row.get("car_name", "") or llm.get("car_name", "")
                 doc = {
                     "car_link": link,
@@ -278,6 +199,7 @@ def build_cars(zcids, out_dir):
                     "court": row.get("court", "") or llm.get("court", ""),
                     "start_price": to_num(row.get("start_price")) or to_num(llm.get("start_price")),
                     "final_price": to_num(row.get("final_price")) or to_num(llm.get("final_price")),
+                    "limit_price": to_num(lm.get("limit_price")),
                     "brand": extract_brand(car_name),
                     "has_license": llm.get("has_license", ""),
                     "has_registration": llm.get("has_registration", ""),
@@ -299,15 +221,15 @@ def build_cars(zcids, out_dir):
                     "first_reg_date": llm.get("first_reg_date", ""),
                     "inspection_expiry": llm.get("inspection_expiry", ""),
                     "vehicle_model": llm.get("vehicle_model", ""),
-                    "source": "detail",
+                    "source": "detail" if llm else "detail_partial",
                 }
                 w.write(json.dumps(doc, ensure_ascii=False) + "\n")
                 written_links.add(link)
                 count += 1
 
-    # 历史期次占位（无 result_detail 的期次，从 winners 生成）
+    # 历史期次占位（默认关闭：历史数据只用于推荐）
     winner_csv = os.path.join(DOWNLOADS_DIR, "winner_profiles.csv")
-    if os.path.exists(winner_csv):
+    if include_winner_only and os.path.exists(winner_csv):
         seen = set()
         with open(winner_csv, "r", encoding="utf-8-sig") as f, open(out, "a", encoding="utf-8") as w:
             for row in csv.DictReader(f):
@@ -327,6 +249,7 @@ def build_cars(zcids, out_dir):
                     "court": "",
                     "start_price": to_num(row.get("start_price")),
                     "final_price": to_num(row.get("final_price")),
+                    "limit_price": None,
                     "brand": extract_brand(row.get("car_name", "")),
                     "has_license": "", "has_registration": "", "has_plate": "", "has_key": "",
                     "use_type": "", "fuel_type": "", "emission_standard": "",
@@ -350,24 +273,77 @@ def _read_csv_dict(path):
         return list(csv.DictReader(f))
 
 
+def get_all_zcids():
+    return sorted(
+        int(d) for d in os.listdir(DOWNLOADS_DIR)
+        if d.isdigit() and os.path.isdir(os.path.join(DOWNLOADS_DIR, d))
+    )
+
+
+def get_latest_pool_zcid(all_zcids):
+    """最新一期有 gsxx_{zcid}.csv 的期次（排名基准）。"""
+    for zcid in sorted(all_zcids, reverse=True):
+        if os.path.exists(os.path.join(DOWNLOADS_DIR, str(zcid), f"gsxx_{zcid}.csv")):
+            return zcid
+    return max(all_zcids) if all_zcids else 2400
+
+
 def main():
     parser = argparse.ArgumentParser(description="CSV → 云数据库 JSONL 导入工具")
-    parser.add_argument("--zcid", action="append", help="只导入指定期次（可多次），默认全部")
+    parser.add_argument("--zcid", action="append", help="兼容旧参数：只导入指定期次（可多次）")
+    parser.add_argument("--current-zcid", type=int, help="当前在售期次（cars 只导入这一期）")
+    parser.add_argument("--pool-zcid", type=int, help="排名资格池期次（默认最新有 gsxx 的期次）")
+    parser.add_argument("--all-pool", action="store_true", help="导入全部期次资格池（默认只导最新池）")
+    parser.add_argument("--include-history-cars", action="store_true",
+                        help="兼容旧行为：把历史中拍车也写入 cars（默认关闭）")
     parser.add_argument("--out", default="downloads/export", help="输出目录")
     args = parser.parse_args()
 
     out_dir = os.path.join(BASE_DIR, args.out)
     os.makedirs(out_dir, exist_ok=True)
 
-    zcids = [int(z) for z in args.zcid] if args.zcid else []
+    all_zcids = get_all_zcids()
+    current_zcid = args.current_zcid or max(all_zcids)
+    pool_zcid = args.pool_zcid or get_latest_pool_zcid(all_zcids)
+
+    if args.zcid:
+        # 旧参数：限定范围
+        requested = [int(z) for z in args.zcid]
+        pool_zcids = [] if args.all_pool else [pool_zcid]
+        winner_zcids = [z for z in requested if z != current_zcid]
+        car_zcids = [z for z in requested if z == current_zcid]
+    else:
+        pool_zcids = [] if args.all_pool else [pool_zcid]
+        winner_zcids = [z for z in all_zcids if z != current_zcid]
+        car_zcids = [current_zcid]
+
     print(f"输出目录: {out_dir}")
-    print(f"期次范围: {'全部' if not zcids else zcids}")
+    print(f"当前在售期次: {current_zcid}")
+    print(f"排名资格池: {'全部' if args.all_pool else pool_zcid}")
+    print(f"历史中拍期次: {winner_zcids[0]}–{winner_zcids[-1]}（{len(winner_zcids)} 期）"
+          if winner_zcids else "历史中拍期次: 无")
 
-    build_pool_all(zcids, out_dir)
-    build_winners(zcids, out_dir)
-    build_cars(zcids, out_dir)
+    counts = {}
+    counts["pool_all"] = build_pool_all(pool_zcids, out_dir)
+    counts["winners"] = build_winners(winner_zcids, out_dir)
+    counts["cars"] = build_cars(
+        car_zcids, out_dir, include_winner_only=args.include_history_cars
+    )
 
-    print(f"\n完成。将 {out_dir} 下的 .jsonl 文件通过 云开发控制台 → 数据库 → 导入 上传。")
+    manifest = {
+        "generated_at": __import__("datetime").datetime.now().isoformat(timespec="seconds"),
+        "current_zcid": current_zcid,
+        "pool_zcid": None if args.all_pool else pool_zcid,
+        "winner_zcids": winner_zcids,
+        "counts": counts,
+    }
+    manifest_path = os.path.join(out_dir, "manifest.json")
+    with open(manifest_path, "w", encoding="utf-8") as f:
+        json.dump(manifest, f, ensure_ascii=False, indent=2)
+
+    print(f"\n完成。{manifest_path}")
+    print(json.dumps(manifest, ensure_ascii=False, indent=2))
+    print(f"\n将 {out_dir} 下的 .json 文件通过 云开发控制台 → 数据库 → 导入 上传。")
 
 
 if __name__ == "__main__":

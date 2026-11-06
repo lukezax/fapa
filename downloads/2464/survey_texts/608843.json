@@ -1,0 +1,23 @@
+{
+  "has_license": "无",
+  "has_registration": "无",
+  "has_plate": "有",
+  "use_type": "非营运",
+  "has_key": "有",
+  "preview_location": "朝阳区东坝路李家坟 5 号祥龙博瑞集团二分公司东侧停车场",
+  "violation_count": 9,
+  "violation_points": 6,
+  "violation_fine": 1800,
+  "is_mortgaged": "是",
+  "parking_fee": "",
+  "repair_fee": "",
+  "total_extra_fee": 3871,
+  "first_reg_date": "2018 年 01 月 30 日",
+  "inspection_expiry": "2026 年 01 月 31 日",
+  "vehicle_model": "FV7201FEDBG",
+  "fuel_type": "汽油",
+  "emission_standard": "国五",
+  "appraisal_price": 82728,
+  "deposit": 80000,
+  "mileage": ""
+}

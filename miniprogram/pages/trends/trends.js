@@ -1,19 +1,25 @@
-// pages/trends/trends.js — 数据分析页
+// pages/trends/trends.js — 本期（202611期 / 2464）在售车辆分析
+// 历史中拍数据只用于 rank 页的推荐，本页只统计本期在售车辆。
 const echarts = require('../../components/ec-canvas/echarts');
+const { CURRENT_ZCID, CURRENT_PERIOD } = require('../../utils/constants');
 
 Page({
   data: {
     loading: true,
+    currentZcid: CURRENT_ZCID,
+    currentPeriod: CURRENT_PERIOD,
     myBrief: null,
-    bracketTimes: [],
-    bracketDist: [],
-    timesDist: [],
+    total: 0,
     brandTop: [],
-    stats: null,
-    timesMedian: null,
-    timesGe80Pct: null,
+    courtTop: [],
+    fuelDist: [],
+    emissionDist: [],
+    priceDist: [],
+    mileageDist: [],
+    condition: null,
+    history: null,
     // 图表 ec 对象：数据到达后再 setData，配合 wx:if 挂载 ec-canvas 触发 onInit
-    decisionEc: null
+    priceEc: null
   },
 
   onLoad() {
@@ -24,19 +30,19 @@ Page({
     this.setData({ loading: true });
     getApp().callFunction('trends', { method: 'overview' })
       .then(res => {
-        const bracketTimes = res.bracket_times || [];
-        const bracketDist = res.bracket_dist || [];
+        const priceDist = this.withPercent(res.price_dist || [], 'count');
         this.setData({
           loading: false,
-          bracketTimes,
-          bracketDist,
-          timesDist: this.withPercent(res.times_dist || [], 'count'),
+          total: res.total || 0,
           brandTop: this.withPercent(res.brand_top || [], 'count'),
-          stats: res.stats || null,
-          timesMedian: res.times_median != null ? res.times_median : null,
-          timesGe80Pct: res.times_ge80_pct != null ? res.times_ge80_pct : null,
-          decisionEc: (bracketTimes.length || bracketDist.length)
-            ? { onInit: this.initDecisionChart.bind(this) } : null
+          courtTop: this.withPercent(res.court_top || [], 'count'),
+          fuelDist: res.fuel_dist || [],
+          emissionDist: res.emission_dist || [],
+          priceDist,
+          mileageDist: this.withPercent(res.mileage_dist || [], 'count'),
+          condition: res.condition || null,
+          history: res.history || null,
+          priceEc: priceDist.length ? { onInit: this.initPriceChart.bind(this) } : null
         });
       })
       .catch(err => {
@@ -57,9 +63,12 @@ Page({
             pct: m ? (parseInt(m[1], 10) / parseInt(m[2], 10) * 100).toFixed(1) : ''
           }
         });
-        if (this._decisionChart) this._decisionChart.setOption(this.buildDecisionOption());
       })
       .catch(() => {});
+  },
+
+  goCarsTab() {
+    wx.switchTab({ url: '/pages/cars/cars' });
   },
 
   goRankTab() {
@@ -87,31 +96,21 @@ Page({
     }));
   },
 
-  // ---- 价位段决策图：柱=该档中拍人数，折线=平均摇号次数，参考线=你的次数 ----
-  initDecisionChart(canvas, width, height, dpr) {
+  // ---- 本期起拍价档位分布（柱状图）----
+  initPriceChart(canvas, width, height, dpr) {
     const chart = echarts.init(canvas, null, { width, height, devicePixelRatio: dpr });
     canvas.setChart(chart);
-    chart.setOption(this.buildDecisionOption());
-    this._decisionChart = chart;
+    chart.setOption(this.buildPriceOption());
+    this._priceChart = chart;
     return chart;
   },
 
-  buildDecisionOption() {
-    const counts = this.data.bracketDist;
-    const timesByBracket = {};
-    for (const b of this.data.bracketTimes) timesByBracket[b.bracket] = b;
-    const brackets = counts.map(i => i.bracket);
-    const pick = (b, key) => (timesByBracket[b] && timesByBracket[b][key] != null) ? timesByBracket[b][key] : null;
-    const userTimes = this.data.myBrief ? Number(this.data.myBrief.times) : null;
-
-    const option = {
-      color: ['#e74c3c', '#3498db', '#f39c12', '#16a085'],
-      legend: {
-        top: 0,
-        data: ['成交数量', '平均摇号次数', '最高次数', '最低次数'].concat(userTimes ? ['你的次数'] : []),
-        textStyle: { fontSize: 10 }
-      },
-      grid: { left: 8, right: 8, top: 40, bottom: 8, containLabel: true },
+  buildPriceOption() {
+    const brackets = this.data.priceDist.map(i => i.bracket);
+    const counts = this.data.priceDist.map(i => i.count);
+    return {
+      color: ['#e74c3c'],
+      grid: { left: 8, right: 8, top: 16, bottom: 8, containLabel: true },
       tooltip: { trigger: 'axis' },
       xAxis: {
         type: 'category',
@@ -119,69 +118,21 @@ Page({
         axisLabel: { fontSize: 9, color: '#57606f', rotate: 30 },
         axisLine: { lineStyle: { color: '#d0d0d8' } }
       },
-      yAxis: [
-        {
-          type: 'value',
-          name: '人数',
-          nameTextStyle: { fontSize: 9, color: '#57606f' },
-          axisLabel: { fontSize: 10, color: '#57606f' },
-          splitLine: { lineStyle: { color: '#f0f2f5' } }
-        },
-        {
-          type: 'value',
-          name: '次数',
-          nameTextStyle: { fontSize: 9, color: '#57606f' },
-          axisLabel: { fontSize: 10, color: '#57606f' },
-          splitLine: { show: false }
-        }
-      ],
-      series: [
-        {
-          name: '成交数量',
-          type: 'bar',
-          data: counts.map(i => i.count),
-          barWidth: '45%',
-          itemStyle: { color: '#e74c3c', borderRadius: [4, 4, 0, 0] }
-        },
-        {
-          name: '平均摇号次数',
-          type: 'line',
-          yAxisIndex: 1,
-          smooth: true,
-          data: brackets.map(b => pick(b, 'avg_times')),
-          itemStyle: { color: '#3498db' },
-          lineStyle: { color: '#3498db', width: 3 }
-        },
-        {
-          name: '最高次数',
-          type: 'line',
-          yAxisIndex: 1,
-          smooth: true,
-          data: brackets.map(b => pick(b, 'max_times')),
-          itemStyle: { color: '#f39c12' },
-          lineStyle: { color: '#f39c12', type: 'dashed' }
-        },
-        {
-          name: '最低次数',
-          type: 'line',
-          yAxisIndex: 1,
-          smooth: true,
-          data: brackets.map(b => pick(b, 'min_times')),
-          itemStyle: { color: '#16a085' },
-          lineStyle: { color: '#16a085', type: 'dashed' }
-        }
-      ]
+      yAxis: {
+        type: 'value',
+        name: '台数',
+        nameTextStyle: { fontSize: 9, color: '#57606f' },
+        axisLabel: { fontSize: 10, color: '#57606f' },
+        splitLine: { lineStyle: { color: '#f0f2f5' } }
+      },
+      series: [{
+        name: '在售台数',
+        type: 'bar',
+        data: counts,
+        barWidth: '50%',
+        itemStyle: { color: '#e74c3c', borderRadius: [4, 4, 0, 0] },
+        label: { show: true, position: 'top', fontSize: 9, color: '#57606f' }
+      }]
     };
-
-    if (userTimes > 0) {
-      option.series[1].markLine = {
-        silent: true,
-        symbol: 'none',
-        data: [{ yAxis: userTimes }],
-        lineStyle: { color: '#27ae60', type: 'solid' },
-        label: { formatter: '你的次数 ' + userTimes, fontSize: 9, color: '#27ae60' }
-      };
-    }
-    return option;
   }
 });

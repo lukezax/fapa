@@ -8,7 +8,7 @@ Page({
   },
   onShareAppMessage() {
     return {
-      title: '京慧车讯 · 15 期成交数据，帮你选对车',
+      title: '京慧车讯 · 15 期成交数据，帮你选本期好车',
       path: '/pages/intro/intro'
     };
   }
