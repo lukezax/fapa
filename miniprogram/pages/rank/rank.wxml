@@ -63,27 +63,31 @@
     <!-- 综合建议 -->
     <view class="rank-advice" wx:if="{{topAdvice}}">
       <text class="rank-advice-label">综合建议</text>
-      <text class="rank-advice-text">优先关注「{{topAdvice.bracket}}」——与你水平相当的成交者 {{topAdvice.matchPct}}% 选它 · 平均 {{topAdvice.times}} 次{{topAdvice.diff ? '（' + topAdvice.diff + '）' : ''}}</text>
+      <text class="rank-advice-text">优先关注「{{topAdvice.bracket}}」——本期成功率约 {{topAdvice.success}}（{{topAdvice.cover}}）· 该档成交者平均 {{topAdvice.times}} 次{{topAdvice.diff ? '（你' + topAdvice.diff + '）' : ''}}</text>
+    </view>
+    <view class="rank-advice" wx:if="{{sampleNote}}">
+      <text class="rank-advice-label">提示</text>
+      <text class="rank-advice-text">{{sampleNote}}</text>
     </view>
 
     <!-- 数据口径说明 -->
     <view class="card rank-rules">
       <view class="card-title">数据口径</view>
       <view class="rank-rules-line">· 车辆普遍按公布的最高限价成交，最终归属由排序决定：摇号次数多者优先，同次数比注册时间先后</view>
-      <view class="rank-rules-line">· 匹配策略：在历史各期中找到排名百分比与你相当（前 {{result.user_pct}}%）的成交者，看他们选了什么车</view>
-      <view class="rank-rules-line">· 推荐度：与你水平相当的成交者中选择该价位段的占比，越高说明该档位越适合你；「成交者平均次数」帮你判断自己的次数够不够</view>
+      <view class="rank-rules-line">· 匹配策略：在历史各期中找到排名百分比与你相当（前 {{result.user_pct}}% ±{{windowPct}}%）的成交者，看他们成交了哪些车</view>
+      <view class="rank-rules-line">· 本期成功率：历史 15 期中同分位者买到该档位车的期次占比，再按本期最高限价能否出到历史溢价修正；≥75% 强烈推荐 / 55-74% 推荐 / 35-54% 可考虑 / <35% 观望</view>
     </view>
 
     <!-- 全景图卡片 -->
     <view class="card">
-      <view class="card-title">价格档位全景</view>
+      <view class="card-title">价格档位全景（本期成功率）</view>
       <view class="rank-pano-row" wx:for="{{panoramaRows}}" wx:key="bracket">
         <view class="rank-pano-head">
           <text class="rank-pano-bracket">{{item.bracket}}</text>
-          <text class="rank-pano-pct">{{item.match_pct}}%</text>
+          <text class="rank-pano-pct">{{item.success_rate}}%</text>
         </view>
         <view class="rank-pano-track">
-          <view class="rank-pano-bar {{item.barClass}}" style="width: {{item.match_pct}}%;"></view>
+          <view class="rank-pano-bar {{item.barClass}}" style="width: {{item.success_rate}}%;"></view>
         </view>
       </view>
       <view class="empty" wx:if="{{!panoramaRows.length}}">暂无档位数据</view>
@@ -100,7 +104,7 @@
         <view class="rank-bk-stats">
           <view class="rank-bk-stat">
             <text class="rank-bk-stat-num">{{bk.match_count}}</text>
-            <text class="rank-bk-stat-label">匹配车数</text>
+            <text class="rank-bk-stat-label">同分位成交</text>
           </view>
           <view class="rank-bk-stat">
             <text class="rank-bk-stat-num">{{bk.avgFinalText}}</text>
@@ -112,8 +116,8 @@
             <text class="rank-bk-diff {{bk.timesDiffClass}}" wx:if="{{bk.timesDiffText}}">{{bk.timesDiffText}}</text>
           </view>
           <view class="rank-bk-stat">
-            <text class="rank-bk-stat-num">{{bk.periods_covered}}</text>
-            <text class="rank-bk-stat-label">覆盖期次</text>
+            <text class="rank-bk-stat-num rank-stat-red">{{bk.successText}}</text>
+            <text class="rank-bk-stat-label">成功率 · {{bk.coverText}}</text>
           </view>
         </view>
 
@@ -125,7 +129,7 @@
             <text class="rank-car-name">{{m.car_name}}</text>
             <text class="rank-car-times" wx:if="{{m.meta}}">{{m.meta}}</text>
             <text class="rank-car-price">起 {{m.start_text}}</text>
-            <text class="rank-car-times" wx:if="{{m.pred_text}}">{{m.pred_text}}</text>
+            <text class="rank-car-times" wx:if="{{m.bid_text}}">{{m.bid_text}}</text>
             <text class="rank-car-arrow">›</text>
           </view>
         </view>

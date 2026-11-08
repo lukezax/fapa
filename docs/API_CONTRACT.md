@@ -1,9 +1,14 @@
-# 小程序 API 数据契约（v2）
+# 小程序 API 数据契约（v3）
 
 > 云函数与前端共享的唯一契约。前端调用云函数，云函数读写云数据库。任何字段修改须同步此文档。
 >
 > **202611 期（2464）调整**：`cars` 集合只存本期在售车辆（zcid=2464）；历史中拍（`winners`）
 > 与资格池（`pool_all`，仅 2400 期）只用于 `rank` 云函数的推荐，不再提供历史车辆列表。
+>
+> **v3 变更（成功率推荐）**：`recommendation` 改为按**本期成功率**分级（≥75 强烈推荐 / 55-74 推荐 /
+> 35-54 可考虑 / <35 观望），弃用 match_pct 占比分级；新增 `success_rate` / `cover_rate` /
+> `suggested_bid` / `capped` 等字段；匹配窗口由「名次 ±10」改为「分位 ±window_pct（默认 ±10%）」；
+> `window` 入参废弃，改为 `window_pct`。
 
 ## 1. 云函数调用约定
 
@@ -24,28 +29,42 @@
 
 ### 3.1 `rank` — 排名查询
 **方法 `calculate`**
-- 入参：`{ times: int, reg_time: string }`（reg_time 格式 `YYYY-MM-DD HH:MM:SS.mmm`，归一化无空格）
+- 入参：`{ times: int, reg_time: string, window_pct?: float }`（reg_time 格式 `YYYY-MM-DD HH:MM:SS.mmm`，归一化无空格；window_pct 可选，默认 10，范围 1-50，即匹配窗口 = 用户分位 ±N 个百分点）
 - 出参：
 ```
 {
   rank: int,              // 精确排名（1-based）
   total: int,             // 全量池人数
   user_pct: float,        // 百分比（1位小数）
-  total_matches: int,     // 匹配总数
+  total_matches: int,     // 同分位窗口内历史中拍总数（= peer_count）
   min_final_price: int|null,
+  window_pct: float,      // 实际生效的窗口
+  peer_count: int,        // 同分位中拍人数
+  sample_insufficient: bool,  // peer_count < 30 时为 true，前端展示"样本较少"提示
+  history_periods: int,   // 历史期次总数（成功率分母，当前 15）
   panorama: [{
     bracket: string,      // "10-15万"
-    match_count: int,
-    match_pct: float,     // 0-100
-    recommendation: "强烈推荐|推荐|可考虑|观望",
+    match_count: int,     // 同分位成交数
+    match_pct: float,     // 0-100 占比（⚠ v3 仅保留兼容，前端不再渲染）
+    success_rate: float,  // 0-100 本期成功率 = cover_rate（档位级）
+    cover_rate: float,    // 同 success_rate；语义：同分位人群买到该档位的期次覆盖率
+    recommendation: "强烈推荐|推荐|可考虑|观望",  // 按 success_rate 分级（75/55/35）
     avg_final_price: int,
     avg_winner_times: float,   // 档位内中拍者平均摇号次数（1位小数）
-    difficulty: "容易|适中|困难|—",   // ⚠ 已废弃：前端不再渲染（与推荐度并列易误读），仅保留兼容
+    difficulty: "容易|适中|困难|—",   // ⚠ 已废弃：前端不再渲染，仅保留兼容
     periods_covered: int,
     top_brands: {brand: count},
     top5: [{car_name, car_link, start_price, final_price, result_zcid, winner_pct, winner_times, brand}],
     all_matches: [{car_name, car_link, start_price, final_price, result_zcid, winner_pct, winner_times, brand, pct_diff}],
-    current_cars: [{car_name, car_link, start_price, mileage_km, fuel_type, zcid}]   // 本期在售，起拍价升序限5
+    current_cars: [{   // 本期在售，起拍价升序限 5
+      car_name, car_link, start_price, limit_price, mileage_km, fuel_type, brand, zcid,
+      predicted_final_price,  // 目标出价 = 起拍价 × 该档历史 avg_deal_ratio
+      suggested_bid,          // 建议出价 = min(最高限价, 目标出价)
+      capped: bool,           // 目标出价 ≥ 最高限价 时 true（限价封顶）
+      success_rate: int|null  // 单车成功率 = 档位成功率 × (suggested_bid / 目标出价)
+    }],
+    current_period: string, current_zcid: int,
+    recommend_reason: string
   }],
   period_trend: [{
     zcid: string,
@@ -62,8 +81,13 @@
 
 > 排名算法：`compute_rank` 在**资格池最新期**（`pool_all` 中 `zcid = latest_zcid`）内
 > count(`times > 输入`) + count(`times == 输入 AND reg_time < 输入`) + 1，与 webapp 一致。
-> `panorama[].current_cars`：本期（`current_zcid=2464`）起拍价落在该档区间的在售车，按起拍价升序取 5 台，
-> 每台带 `predicted_final_price`（= 起拍价 × 该档历史 `avg_deal_ratio`）。
+>
+> **成功率公式（v3）**：同分位窗口 = 用户分位 ±window_pct%；窗口内历史中拍者为 peer；
+> `cover_rate = 覆盖期次 / history_periods × 100`（history_periods 当前为 15 期，331–2400）；
+> 单车 `suggested_bid = min(最高限价, 起拍价 × 平均溢价)`，
+> `reach = suggested_bid / (起拍价 × 平均溢价)`（限价封顶时 < 1），
+> **单车成功率 = cover_rate × reach**。档位级 success_rate = cover_rate。
+>
 > `panorama[].top5 / all_matches` 为**历史成交参考**，仅用于解释推荐，不是可筛选列表。
 > 查询历史保存走 `histories` 云函数（见 3.5），rank 不再提供 `history` 方法。
 
@@ -88,6 +112,9 @@
 }
 ```
 > `zcid` 参数已废弃：云函数固定 `zcid=2464`，前端无需传。
+> **防御性报错**：筛选结果 total=0 且集合总数>0 时返回
+> `{ error: { code: 409, msg: ... } }` —— 提示 cars 集合为旧版数据（缺少 2464 期在售车辆），
+> 需在云开发控制台清空后重新导入 `downloads/export/cars.json` 及 winners.json / pool_all.json。
 
 - 出参：
 ```

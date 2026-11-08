@@ -79,7 +79,8 @@ async function computeRank(times, regTime, latestZcid) {
 
 async function calculate(event) {
   const { times, reg_time } = event;
-  const window = parseInt(event.window, 10) || 10;
+  // 匹配窗口：用户分位 ±N 个百分点（默认 ±10%），不再使用名次窗口
+  const windowPct = Math.min(50, Math.max(1, parseFloat(event.window_pct) || 10));
 
   if (!times || !reg_time) {
     return { error: { code: 400, msg: '请填写次数和注册时间' } };
@@ -99,10 +100,9 @@ async function calculate(event) {
   const rank = await computeRank(times, reg_time, latestZcid);
   const userPct = rank / total * 100;
 
-  const lowAbs = Math.max(1, rank - window);
-  const highAbs = rank + window;
-  const pctLow = Math.floor(lowAbs / total * 100);
-  const pctHigh = Math.ceil(highAbs / total * 100);
+  // 同分位窗口：用户百分比 ± windowPct 个百分点
+  const pctLow = Math.max(0, userPct - windowPct);
+  const pctHigh = Math.min(100, userPct + windowPct);
 
   // 加载全部中拍者
   const winners = await fetchAll('winners');
@@ -111,6 +111,9 @@ async function calculate(event) {
     _pct: (w.winner_times || 0) / (w.total_bidders || 1), // 与 Flask 对齐（此处仅备用）
     _brand: w.brand || ''
   }));
+
+  // 历史期次总数（成功率分母）
+  const historyPeriods = new Set(winnersEnriched.map(w => w.result_zcid)).size;
 
   // 按价格档位统计
   const bracketStats = {};
@@ -169,12 +172,6 @@ async function calculate(event) {
     const matchPct = totalMatches > 0
       ? Math.round(matchCount / totalMatches * 1000) / 10 : 0;
 
-    let recommendation;
-    if (matchPct >= 25) recommendation = '强烈推荐';
-    else if (matchPct >= 15) recommendation = '推荐';
-    else if (matchPct >= 5) recommendation = '可考虑';
-    else recommendation = '观望';
-
     const avgWinnerPct = d.pctList.length
       ? Math.round(d.pctList.reduce((a, b) => a + b, 0) / d.pctList.length * 10) / 10 : 0;
     const avgFinal = d.finalPrices.length
@@ -200,6 +197,21 @@ async function calculate(event) {
 
     const periodsCovered = new Set(peerMatches.map(m => m.result_zcid)).size;
 
+    const avgDeal = d.dealRatios.length
+      ? Math.round(d.dealRatios.reduce((a, b) => a + b, 0) / d.dealRatios.length * 100) / 100 : 0;
+
+    // 本期成功率（档位级）= 同分位人群买到该档位车的期次覆盖率
+    // cover_rate: 0-100；单车成功率 = cover_rate × 出价可达度（见 current_cars）
+    const coverRate = historyPeriods > 0
+      ? Math.round(periodsCovered / historyPeriods * 1000) / 10 : 0;
+    const successRate = coverRate;
+
+    let recommendation;
+    if (successRate >= 75) recommendation = '强烈推荐';
+    else if (successRate >= 55) recommendation = '推荐';
+    else if (successRate >= 35) recommendation = '可考虑';
+    else recommendation = '观望';
+
     peerMatches.sort((a, b) => a.pct_diff - b.pct_diff);
 
     const top5Sorted = [...peerMatches].sort((a, b) => parseFloat(a.final_price) - parseFloat(b.final_price));
@@ -218,19 +230,20 @@ async function calculate(event) {
       brand: m.brand, pct_diff: m.pct_diff
     }));
 
-    const avgDeal = d.dealRatios.length
-      ? Math.round(d.dealRatios.reduce((a, b) => a + b, 0) / d.dealRatios.length * 100) / 100 : 0;
-
     panoramaList.push({
       bracket: bk, match_count: matchCount, match_pct: matchPct,
-      recommendation, avg_final_price: avgFinal, avg_winner_times: avgTimes,
+      recommendation,
+      success_rate: successRate, cover_rate: coverRate,
+      avg_final_price: avgFinal, avg_winner_times: avgTimes,
       avg_deal_ratio: avgDeal,
       difficulty, periods_covered: periodsCovered,
       top_brands: topBrandsObj, top5, all_matches: allMatches
     });
   }
 
-  panoramaList.sort((a, b) => b.match_pct - a.match_pct);
+  // 按成功率降序，同成功率按同分位样本数降序
+  panoramaList.sort((a, b) =>
+    (b.success_rate - a.success_rate) || (b.match_count - a.match_count));
 
   // 本期在售：每个档位查本期起拍价落在区间内的车，升序取 5
   const currentCarsByBracket = {};
@@ -245,18 +258,32 @@ async function calculate(event) {
         .limit(5)
         .get();
       currentCarsByBracket[p.bracket] = res.data.map(c => {
-        const predicted = (p.avg_deal_ratio > 0 && c.start_price)
-          ? Math.round(c.start_price * p.avg_deal_ratio) : null;
+        const sp = parseFloat(c.start_price);
+        const lp = c.limit_price != null && c.limit_price !== '' ? parseFloat(c.limit_price) : null;
+        const r = p.avg_deal_ratio > 0 ? p.avg_deal_ratio : null;
+        // 历史同分位同档溢价对应的目标出价 = 起拍价 × 历史平均溢价
+        const target = (r && !isNaN(sp) && sp > 0) ? Math.round(sp * r) : null;
+        // 建议出价 = min(最高限价, 目标出价)
+        const hasLimit = lp != null && !isNaN(lp);
+        const suggested = (target != null && hasLimit) ? Math.min(lp, target) : target;
+        // 出价可达度 = 建议出价 / 目标出价（限价封顶够不到历史溢价时 <1，成功率打折）
+        const reach = (target != null && suggested != null && target > 0)
+          ? suggested / target : 1;
+        const carSuccess = (target != null)
+          ? Math.round(p.success_rate * reach) : null;
         return {
           car_name: c.car_name,
           car_link: c.car_link,
           start_price: c.start_price,
-          limit_price: c.limit_price != null ? c.limit_price : null,
+          limit_price: hasLimit ? lp : null,
           mileage_km: c.mileage_km,
           fuel_type: c.fuel_type,
           brand: c.brand,
           zcid: c.zcid,
-          predicted_final_price: predicted
+          predicted_final_price: target,
+          suggested_bid: suggested,
+          capped: (target != null && hasLimit) ? target >= lp : false,
+          success_rate: carSuccess
         };
       });
     }
@@ -264,9 +291,9 @@ async function calculate(event) {
       p.current_cars = currentCarsByBracket[p.bracket] || [];
       p.current_period = CURRENT_PERIOD;
       p.current_zcid = CURRENT_ZCID;
-      if (p.current_cars.length && p.avg_deal_ratio > 0) {
-        p.recommend_reason = '历史同档平均成交为起拍价的 ' + p.avg_deal_ratio + ' 倍，'
-          + '本期在售 ' + p.current_cars.length + ' 台可参考该倍数出价';
+      if (p.periods_covered > 0) {
+        p.recommend_reason = '历史 ' + p.periods_covered + '/' + historyPeriods
+          + ' 期有同分位成交此档位，本期成功率约 ' + p.success_rate + '%';
       } else {
         p.recommend_reason = '';
       }
@@ -330,7 +357,11 @@ async function calculate(event) {
     period_trend: periodTrendList,
     latest_zcid: latestZcid,
     current_zcid: carsZcid,
-    current_period: CURRENT_PERIOD
+    current_period: CURRENT_PERIOD,
+    window_pct: windowPct,
+    peer_count: totalMatches,
+    sample_insufficient: totalMatches < 30,
+    history_periods: historyPeriods
   };
 }
 

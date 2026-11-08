@@ -284,9 +284,9 @@
 
     <!-- Section ②: Panorama -->
     <div class="card" id="panoramaSection" style="display:none;">
-      <div class="section-title">价格全景图</div>
+      <div class="section-title">价格档位全景（本期成功率）</div>
       <p style="font-size:12px; color:#999; margin-bottom:12px;">
-        历史上和你排名差不多的人，最终都花了多少钱买车
+        同分位历史买家在你的窗口内覆盖到的期次占比，条越长说明该价位档越容易买到
       </p>
       <div id="panoramaContainer"></div>
     </div>
@@ -296,7 +296,7 @@
       <div class="filter-bar">
         <label>排序</label>
         <select id="sortSelect" onchange="applyFilters()">
-          <option value="match_pct">按匹配度 ↓</option>
+          <option value="success_rate">按成功率 ↓</option>
           <option value="avg_price">按均价 ↓</option>
         </select>
         <label style="margin-left:12px;">品牌</label>
@@ -399,14 +399,14 @@ function bracketSlug(b) {
 }
 
 function barColorClass(pct) {
-  if (pct >= 20) return 'bar-green';
-  if (pct >= 8) return 'bar-blue';
+  if (pct >= 70) return 'bar-green';
+  if (pct >= 40) return 'bar-blue';
   return 'bar-orange';
 }
 
 function borderColorClass(pct) {
-  if (pct >= 20) return 'border-green';
-  if (pct >= 8) return 'border-blue';
+  if (pct >= 70) return 'border-green';
+  if (pct >= 40) return 'border-blue';
   return 'border-orange';
 }
 
@@ -427,10 +427,17 @@ function medalHtml(idx) {
 
 // ── Render Orchestrator ──
 function renderAll(data) {
+  window._historyPeriods = data.history_periods || 15;
   renderHero(data);
   renderPanorama(data.panorama);
   buildBrandFilter(data.panorama);
   window._panoramaData = data.panorama;
+  window._rankMeta = {
+    sampleNote: data.sample_insufficient
+      ? '同分位历史样本较少（' + (data.peer_count || 0) + ' 人），推荐仅供参考'
+      : '',
+    windowPct: data.window_pct || 10
+  };
   applyFilters();
   renderTrendTable(data.period_trend);
   document.getElementById('panoramaSection').style.display = 'block';
@@ -446,13 +453,17 @@ function renderHero(data) {
   if (data.min_final_price) {
     minPriceHtml = '<div class="hero-min-price">历史最低成功价 <strong>' + fmtPrice(data.min_final_price) + '</strong></div>';
   }
+  var sampleNote = window._rankMeta && window._rankMeta.sampleNote;
+  var sampleHtml = sampleNote
+    ? '<div class="hero-hint" style="color:#b45309;">⚠ ' + sampleNote + '</div>' : '';
   document.getElementById('heroSection').innerHTML =
     '<div class="hero-rank">#' + fmtNum(data.rank) + ' <small>/ ' + fmtNum(data.total) + '</small></div>' +
     '<div class="hero-pct">前 ' + data.user_pct + '%</div>' +
-    '<div class="hero-matches">共匹配到 ' + fmtNum(data.total_matches) + ' 辆历史中拍</div>' +
+    '<div class="hero-matches">同分位匹配到 ' + fmtNum(data.total_matches) + ' 位历史中拍（成功率口径：历史 ' + (data.history_periods || 15) + ' 期）</div>' +
     minPriceHtml +
-    '<div class="hero-hint">匹配策略: 在历史各期中找到排名百分比前 ' + data.user_pct + '% 附近的中拍者，'
-    + '并对应到 ' + (data.current_period || '本期') + ' 在售车辆</div>'
+    sampleHtml +
+    '<div class="hero-hint">匹配策略: 在历史各期中找到排名百分比与你相当（前 ' + data.user_pct + '% ±' + (data.window_pct || 10) + '%）的中拍者，'
+    + '对应到 ' + (data.current_period || '本期') + ' 在售车辆</div>'
     + '<div class="hero-hint" style="margin-top:4px;">资格池: ' + fmtNum(data.total) + ' 人（'
     + data.latest_zcid + '期）· 本期在售按 ' + data.current_zcid + ' 期计算</div>';
 }
@@ -465,18 +476,18 @@ function renderPanorama(panorama) {
   const sorted = [...panorama].sort(function(a, b) {
     return bracketSortKey(a.bracket) - bracketSortKey(b.bracket);
   });
-  // Find max match_pct for bar width scaling
+  // Find max success_rate for bar width scaling
   var maxPct = 0;
   for (var i = 0; i < sorted.length; i++) {
-    if (sorted[i].match_pct > maxPct) maxPct = sorted[i].match_pct;
+    if (sorted[i].success_rate > maxPct) maxPct = sorted[i].success_rate;
   }
 
   var html = '';
   for (var i = 0; i < sorted.length; i++) {
     var r = sorted[i];
-    var barWidth = maxPct > 0 ? (r.match_pct / maxPct * 100) : 0;
-    var colorCls = barColorClass(r.match_pct);
-    var isTop = (r.match_pct === maxPct);
+    var barWidth = maxPct > 0 ? (r.success_rate / maxPct * 100) : 0;
+    var colorCls = barColorClass(r.success_rate);
+    var isTop = (r.success_rate === maxPct);
     var starHtml = isTop ? '<span class="panorama-star">★</span> ' : '';
     var rowCls = 'panorama-row' + (isTop ? ' top-row' : '');
     var slug = bracketSlug(r.bracket);
@@ -484,7 +495,7 @@ function renderPanorama(panorama) {
     html += '<div class="' + rowCls + '" onclick="scrollToCard(\'' + slug + '\')">' +
       '<span class="panorama-label">' + starHtml + r.bracket + '</span>' +
       '<div class="panorama-bar-wrap"><div class="panorama-bar ' + colorCls + '" style="width:' + barWidth.toFixed(1) + '%"></div></div>' +
-      '<span class="panorama-pct">' + r.match_pct + '%</span>' +
+      '<span class="panorama-pct">' + r.success_rate + '%</span>' +
       '<span class="panorama-count">' + r.match_count + '辆</span>' +
       '</div>';
   }
@@ -526,7 +537,7 @@ function applyFilters() {
 
   // Sort
   var sortMap = {
-    'match_pct': function(r) { return -r.match_pct; },
+    'success_rate': function(r) { return -r.success_rate; },
     'avg_price': function(r) { return -r.avg_final_price; },
   };
   items.sort(function(a, b) {
@@ -542,7 +553,7 @@ function applyFilters() {
 }
 
 function renderCard(r, idx) {
-  var borderCls = borderColorClass(r.match_pct);
+  var borderCls = borderColorClass(r.success_rate);
   var medal = medalHtml(idx);
   var diffHtml = diffBadgeHtml(r.recommendation);
 
@@ -597,27 +608,31 @@ function renderCard(r, idx) {
     currentHtml += '<div class="current-cars"><div class="current-cars-title">本期在售 ' + r.current_period + ' · 起拍价最低 ' + r.current_cars.length + ' 台</div>';
     for (var ci = 0; ci < r.current_cars.length; ci++) {
       var cc = r.current_cars[ci];
-      var predText = cc.predicted_final_price ? ' · 预计 ' + fmtPrice(cc.predicted_final_price) : '';
+      var bidText = cc.suggested_bid ? ' · 建议 ' + fmtPrice(cc.suggested_bid)
+        + (cc.capped ? '（顶格）' : '')
+        + (cc.success_rate != null ? ' · 成功率 ' + cc.success_rate + '%' : '') : '';
       var kmText = cc.mileage ? ' · ' + (cc.mileage / 10000).toFixed(1) + '万km' : '';
       currentHtml += '<div class="current-car-item">' +
         '<a href="' + cc.car_link + '" target="_blank" rel="noopener">' + cc.car_name + '</a>' +
-        '<span class="meta">起 ' + fmtPrice(cc.start_price) + predText + kmText + '</span>' +
+        '<span class="meta">起 ' + fmtPrice(cc.start_price) + bidText + kmText + '</span>' +
         '</div>';
     }
     currentHtml += '</div>';
   }
 
+  var coverText = r.periods_covered + '/' + (window._historyPeriods || 15) + ' 期';
+
   return '<div class="detail-card ' + borderCls + '" id="' + cardId + '">' +
     '<div class="detail-header">' +
       medal +
       '<span class="bkt-name">' + r.bracket + '</span>' +
-      '<span class="bkt-pct">' + r.match_pct + '%</span>' +
+      '<span class="bkt-pct">成功率 ' + r.success_rate + '%</span>' +
       '<span class="bkt-count">' + r.match_count + '辆</span>' +
       diffHtml +
     '</div>' +
     '<div class="detail-stats">' +
       '<span>均价 <strong>' + fmtPrice(r.avg_final_price) + '</strong></span>' +
-      '<span>15期中有 <strong>' + r.periods_covered + ' 期</strong>在此档位成交</span>' +
+      '<span>同分位成交覆盖 <strong>' + coverText + '</strong></span>' +
     '</div>' +
     currentHtml +
     top5Html +

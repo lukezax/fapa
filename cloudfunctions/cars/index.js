@@ -114,6 +114,21 @@ async function list(event) {
   const countRes = await collection.where(where).count();
   const total = countRes.total;
 
+  // 防御：集合里有数据但本期(2464)查不到 → 大概率是旧版数据未重新导入
+  if (total === 0) {
+    const anyRes = await collection.count();
+    if (anyRes.total > 0) {
+      return {
+        error: {
+          code: 409,
+          msg: 'cars 集合为旧版数据（缺少 ' + CURRENT_ZCID + ' 期在售车辆）。'
+            + '请在云开发控制台清空 cars 集合后重新导入 downloads/export/cars.json，'
+            + '并同步导入 winners.json / pool_all.json'
+        }
+      };
+    }
+  }
+
   // 聚合管道排序：可空字段（里程/违章）升序时 null 恒排最后
   const nullKey = '_null_' + sort;
   const sortSpec = { [nullKey]: 1 };

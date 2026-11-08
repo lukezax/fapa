@@ -150,7 +150,11 @@ def calculate():
 
     times = data.get("times")
     reg_time = data.get("reg_time")
-    window = int(data.get("window", 10))
+    # 匹配窗口：用户分位 ±N 个百分点（默认 ±10%）
+    try:
+        window_pct = min(50.0, max(1.0, float(data.get("window_pct", 10))))
+    except (TypeError, ValueError):
+        window_pct = 10.0
 
     if not times or not reg_time:
         return {"error": "请填写次数和注册时间"}, 400
@@ -163,10 +167,9 @@ def calculate():
 
     user_pct = rank / GSXX_TOTAL * 100
 
-    low_abs = max(1, rank - window)
-    high_abs = rank + window
-    pct_low = math.floor(low_abs / GSXX_TOTAL * 100)
-    pct_high = math.ceil(high_abs / GSXX_TOTAL * 100)
+    pct_low = max(0.0, user_pct - window_pct)
+    pct_high = min(100.0, user_pct + window_pct)
+    history_periods = len({w["result_zcid"] for w in winner_pool})
 
     bracket_stats = {}
     for w in winner_pool:
@@ -215,15 +218,6 @@ def calculate():
         match_count = len(peer_matches)
         match_pct = round(match_count / total_matches * 100, 1) if total_matches > 0 else 0
 
-        if match_pct >= 25:
-            recommendation = "强烈推荐"
-        elif match_pct >= 15:
-            recommendation = "推荐"
-        elif match_pct >= 5:
-            recommendation = "可考虑"
-        else:
-            recommendation = "观望"
-
         avg_winner_pct = round(sum(d["pct_list"]) / len(d["pct_list"]), 1) if d["pct_list"] else 0
         avg_final = round(sum(d["final_prices"]) / len(d["final_prices"])) if d["final_prices"] else 0
         avg_deal = round(sum(d["deal_ratios"]) / len(d["deal_ratios"]), 2) if d["deal_ratios"] else 0
@@ -241,6 +235,19 @@ def calculate():
             difficulty = "—"
 
         periods_covered = len(set(m["result_zcid"] for m in peer_matches))
+
+        # 本期成功率（档位级）= 同分位人群买到该档位车的期次覆盖率
+        cover_rate = round(periods_covered / history_periods * 1000) / 10 if history_periods else 0
+        success_rate = cover_rate
+
+        if success_rate >= 75:
+            recommendation = "强烈推荐"
+        elif success_rate >= 55:
+            recommendation = "推荐"
+        elif success_rate >= 35:
+            recommendation = "可考虑"
+        else:
+            recommendation = "观望"
 
         peer_matches.sort(key=lambda x: x["pct_diff"])
 
@@ -277,6 +284,8 @@ def calculate():
             "match_count": match_count,
             "match_pct": match_pct,
             "recommendation": recommendation,
+            "success_rate": success_rate,
+            "cover_rate": cover_rate,
             "avg_final_price": avg_final,
             "avg_deal_ratio": avg_deal,
             "difficulty": difficulty,
@@ -286,7 +295,8 @@ def calculate():
             "all_matches": all_matches,
         })
 
-    panorama_list.sort(key=lambda x: -x["match_pct"])
+    # 按成功率降序，同成功率按同分位样本数降序
+    panorama_list.sort(key=lambda x: (-x["success_rate"], -x["match_count"]))
 
     # 本期在售：每个档位取起拍价落在区间内的车，升序取 5
     def bracket_range(bk):
@@ -310,10 +320,23 @@ def calculate():
             except (TypeError, ValueError):
                 continue
             if lo <= spv < hi:
-                predicted = (
-                    round(spv * p["avg_deal_ratio"])
-                    if p.get("avg_deal_ratio") else None
-                )
+                r = p.get("avg_deal_ratio") or 0
+                # 历史同分位同档溢价对应的目标出价 = 起拍价 × 历史平均溢价
+                predicted = round(spv * r) if r > 0 else None
+                limit_raw = c.get("limit_price")
+                try:
+                    limit_v = float(limit_raw) if limit_raw not in (None, "") else None
+                except (TypeError, ValueError):
+                    limit_v = None
+                # 建议出价 = min(最高限价, 目标出价)；限价封顶时成功率按可达度打折
+                if predicted is not None and limit_v is not None:
+                    suggested = min(limit_v, predicted)
+                else:
+                    suggested = predicted
+                if predicted:
+                    car_success = round(p.get("success_rate", 0) * (suggested / predicted))
+                else:
+                    car_success = None
                 matched.append({
                     "car_name": c.get("car_name", ""),
                     "car_link": c.get("car_link", ""),
@@ -323,6 +346,9 @@ def calculate():
                     "fuel_type": c.get("fuel_type", ""),
                     "brand": c.get("_brand", ""),
                     "predicted_final_price": predicted,
+                    "suggested_bid": suggested,
+                    "capped": bool(predicted is not None and limit_v is not None and predicted >= limit_v),
+                    "success_rate": car_success,
                 })
         matched.sort(key=lambda x: float(x["start_price"] or 0))
         current_cars_by_bracket[p["bracket"]] = matched[:5]
@@ -331,6 +357,11 @@ def calculate():
         p["current_cars"] = current_cars_by_bracket.get(p["bracket"], [])
         p["current_period"] = CURRENT_PERIOD
         p["current_zcid"] = CURRENT_ZCID
+        p["recommend_reason"] = (
+            f"历史 {p['periods_covered']}/{history_periods} 期有同分位成交此档位，"
+            f"本期成功率约 {p['success_rate']}%"
+            if p["periods_covered"] > 0 else ""
+        )
 
     periods_order = [str(z) for z in ALL_ZCIDS]
     period_trend_list = []
@@ -395,6 +426,10 @@ def calculate():
         "latest_zcid": POOL_ZCID,
         "current_zcid": CURRENT_ZCID,
         "current_period": CURRENT_PERIOD,
+        "window_pct": window_pct,
+        "peer_count": total_matches,
+        "sample_insufficient": total_matches < 30,
+        "history_periods": history_periods,
     }
 
 
