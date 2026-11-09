@@ -75,7 +75,7 @@
       <view class="card-title">数据口径</view>
       <view class="rank-rules-line">· 车辆普遍按公布的最高限价成交，最终归属由排序决定：摇号次数多者优先，同次数比注册时间先后</view>
       <view class="rank-rules-line">· 匹配策略：在历史各期中找到排名百分比与你相当（前 {{result.user_pct}}% ±{{windowPct}}%）的成交者，看他们成交了哪些车</view>
-      <view class="rank-rules-line">· 本期成功率：历史 15 期中同分位者买到该档位车的期次占比，再按本期最高限价能否出到历史溢价修正；≥75% 强烈推荐 / 55-74% 推荐 / 35-54% 可考虑 / <35% 观望</view>
+      <view class="rank-rules-line">· 本期成功率：历史 15 期中同分位者买到该档位车的期次占比，再按本期最高限价能否出到历史溢价修正；≥75% 强烈推荐 / 55-74% 推荐 / 35-54% 可考虑 / 低于35% 观望</view>
     </view>
 
     <!-- 全景图卡片 -->
