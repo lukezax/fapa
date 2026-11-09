@@ -1,0 +1,24 @@
+{
+  "envId": "cloud1-d6g6tx36h29179055",
+  "functionRoot": "./cloudfunctions",
+  "functions": [
+    {
+      "name": "cars",
+      "timeout": 10,
+      "memorySize": 256,
+      "installDependency": true
+    },
+    {
+      "name": "rank",
+      "timeout": 20,
+      "memorySize": 512,
+      "installDependency": true
+    },
+    {
+      "name": "trends",
+      "timeout": 20,
+      "memorySize": 256,
+      "installDependency": true
+    }
+  ]
+}
