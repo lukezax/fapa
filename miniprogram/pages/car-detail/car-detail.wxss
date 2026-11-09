@@ -128,17 +128,26 @@
   flex-shrink: 0;
 }
 
-/* 分享按钮（重置原生 button 样式，尺寸对齐收藏按钮） */
+/* 分享按钮（重置原生 button 样式，尺寸对齐收藏按钮）
+   基础库 button:not([size='mini']) 以更高特异度设置 width/height，须用 !important 覆盖 */
 .detail-share-btn {
-  width: 72rpx;
-  height: 72rpx;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 72rpx !important;
+  height: 72rpx !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
   border-radius: 50%;
   background: #f0f2f5;
-  font-size: 22rpx;
+  font-size: 20rpx;
   color: #57606f;
-  line-height: 72rpx;
+  line-height: 1 !important;
   padding: 0;
-  margin-right: 16rpx;
+  margin: 0 16rpx 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .detail-share-btn::after {

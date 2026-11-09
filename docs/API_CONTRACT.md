@@ -7,8 +7,8 @@
 >
 > **v3 变更（成功率推荐）**：`recommendation` 改为按**本期成功率**分级（≥75 强烈推荐 / 55-74 推荐 /
 > 35-54 可考虑 / <35 观望），弃用 match_pct 占比分级；新增 `success_rate` / `cover_rate` /
-> `suggested_bid` / `capped` 等字段；匹配窗口由「名次 ±10」改为「分位 ±window_pct（默认 ±10%）」；
-> `window` 入参废弃，改为 `window_pct`。
+> `suggested_bid` / `capped` 等字段；v3.2 匹配窗口改为「名次 ±N 名（默认 ±50 名起步，样本 <30 自动
+> 翻倍扩窗，上限 ±3000 名）」，`window` / `window_pct` 入参废弃，改为 `window_rank`。
 
 ## 1. 云函数调用约定
 
@@ -29,7 +29,7 @@
 
 ### 3.1 `rank` — 排名查询
 **方法 `calculate`**
-- 入参：`{ times: int, reg_time: string, window_pct?: float }`（reg_time 格式 `YYYY-MM-DD HH:MM:SS.mmm`，归一化无空格；window_pct 可选，默认 10，范围 1-50，即匹配窗口 = 用户分位 ±N 个百分点）
+- 入参：`{ times: int, reg_time: string, window_rank?: int }`（reg_time 格式 `YYYY-MM-DD HH:MM:SS.mmm`，归一化无空格；window_rank 可选，默认 50，范围 10-3000，即匹配窗口 = 用户排名 ±N 名起步）
 - 出参：
 ```
 {
@@ -38,7 +38,8 @@
   user_pct: float,        // 百分比（1位小数）
   total_matches: int,     // 同分位窗口内历史中拍总数（= peer_count）
   min_final_price: int|null,
-  window_pct: float,      // 实际生效的窗口
+  window_base: int,       // 请求的窗口起点（名次，默认 50）
+  window_rank_used: int,  // 实际生效窗口（名次；样本 <30 自动翻倍扩窗，上限 3000）
   peer_count: int,        // 同分位中拍人数
   sample_insufficient: bool,  // peer_count < 30 时为 true，前端展示"样本较少"提示
   history_periods: int,   // 历史期次总数（成功率分母，当前 15）
@@ -82,7 +83,7 @@
 > 排名算法：`compute_rank` 在**资格池最新期**（`pool_all` 中 `zcid = latest_zcid`）内
 > count(`times > 输入`) + count(`times == 输入 AND reg_time < 输入`) + 1，与 webapp 一致。
 >
-> **成功率公式（v3）**：同分位窗口 = 用户分位 ±window_pct%；窗口内历史中拍者为 peer；
+> **成功率公式（v3.2）**：同分位窗口 = 用户排名 ±N 名（N 自 window_base 起自适应翻倍至样本 ≥30，封顶 3000）；窗口内历史中拍者为 peer；
 > `cover_rate = 覆盖期次 / history_periods × 100`（history_periods 当前为 15 期，331–2400）；
 > 单车 `suggested_bid = min(最高限价, 起拍价 × 平均溢价)`，
 > `reach = suggested_bid / (起拍价 × 平均溢价)`（限价封顶时 < 1），

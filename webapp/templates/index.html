@@ -436,7 +436,8 @@ function renderAll(data) {
     sampleNote: data.sample_insufficient
       ? '同分位历史样本较少（' + (data.peer_count || 0) + ' 人），推荐仅供参考'
       : '',
-    windowPct: data.window_pct || 10
+    windowBase: data.window_base || 50,
+    windowUsed: data.window_rank_used || data.window_base || 50
   };
   applyFilters();
   renderTrendTable(data.period_trend);
@@ -462,7 +463,7 @@ function renderHero(data) {
     '<div class="hero-matches">同分位匹配到 ' + fmtNum(data.total_matches) + ' 位历史中拍（成功率口径：历史 ' + (data.history_periods || 15) + ' 期）</div>' +
     minPriceHtml +
     sampleHtml +
-    '<div class="hero-hint">匹配策略: 在历史各期中找到排名百分比与你相当（前 ' + data.user_pct + '% ±' + (data.window_pct || 10) + '%）的中拍者，'
+    '<div class="hero-hint">匹配策略: 在历史各期中找到排名与你相近（±' + (data.window_rank_used || 50) + ' 名，样本不足时自动翻倍扩窗）的中拍者，'
     + '对应到 ' + (data.current_period || '本期') + ' 在售车辆</div>'
     + '<div class="hero-hint" style="margin-top:4px;">资格池: ' + fmtNum(data.total) + ' 人（'
     + data.latest_zcid + '期）· 本期在售按 ' + data.current_zcid + ' 期计算</div>';

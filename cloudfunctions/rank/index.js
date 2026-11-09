@@ -79,8 +79,8 @@ async function computeRank(times, regTime, latestZcid) {
 
 async function calculate(event) {
   const { times, reg_time } = event;
-  // 匹配窗口：用户分位 ±N 个百分点（默认 ±10%），不再使用名次窗口
-  const windowPct = Math.min(50, Math.max(1, parseFloat(event.window_pct) || 10));
+  // 匹配窗口：与用户排名相邻的 ±N 名（默认 ±50 名起步，样本 <30 自动翻倍扩窗，上限 ±3000 名）
+  const windowBase = Math.min(3000, Math.max(10, parseInt(event.window_rank, 10) || 50));
 
   if (!times || !reg_time) {
     return { error: { code: 400, msg: '请填写次数和注册时间' } };
@@ -100,10 +100,6 @@ async function calculate(event) {
   const rank = await computeRank(times, reg_time, latestZcid);
   const userPct = rank / total * 100;
 
-  // 同分位窗口：用户百分比 ± windowPct 个百分点
-  const pctLow = Math.max(0, userPct - windowPct);
-  const pctHigh = Math.min(100, userPct + windowPct);
-
   // 加载全部中拍者
   const winners = await fetchAll('winners');
   const winnersEnriched = winners.map(w => ({
@@ -114,6 +110,21 @@ async function calculate(event) {
 
   // 历史期次总数（成功率分母）
   const historyPeriods = new Set(winnersEnriched.map(w => w.result_zcid)).size;
+
+  // 窗口计算：以排名 ±windowBase 名起步，同分位样本 <30 自动翻倍扩窗，上限 ±3000 名
+  let windowUsed = windowBase;
+  let pctLow = 0;
+  let pctHigh = 0;
+  for (;;) {
+    pctLow = Math.max(1, rank - windowUsed) / total * 100;
+    pctHigh = Math.min(total, rank + windowUsed) / total * 100;
+    const peerSample = winnersEnriched.filter(w => {
+      const wPct = parseInt(w.winner_rank, 10) / parseInt(w.total_bidders, 10) * 100;
+      return wPct >= pctLow && wPct <= pctHigh;
+    }).length;
+    if (peerSample >= 30 || windowUsed >= 3000) break;
+    windowUsed = Math.min(3000, windowUsed * 2);
+  }
 
   // 按价格档位统计
   const bracketStats = {};
@@ -358,7 +369,8 @@ async function calculate(event) {
     latest_zcid: latestZcid,
     current_zcid: carsZcid,
     current_period: CURRENT_PERIOD,
-    window_pct: windowPct,
+    window_base: windowBase,
+    window_rank_used: windowUsed,
     peer_count: totalMatches,
     sample_insufficient: totalMatches < 30,
     history_periods: historyPeriods

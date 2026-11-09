@@ -18,7 +18,8 @@ Page({
     periodTrend: [],
     minFinalPriceText: '',
     sampleNote: '',
-    windowPct: 10
+    windowRank: 50,
+    windowRankUsed: 50
   },
 
   // 从 mine 页历史点击进入：options.times / options.reg_time（已 encodeURIComponent）
@@ -100,7 +101,7 @@ Page({
   doQuery(times, regTimeFull) {
     this.setData({ loading: true });
     this._lastQuery = { times, regTimeFull };
-    app.callFunction('rank', { times, reg_time: regTimeFull, window_pct: 10 })
+    app.callFunction('rank', { times, reg_time: regTimeFull, window_rank: 50 })
       .then(res => {
         // fire-and-forget 保存历史（静默失败）
         app.callFunction('histories', {
@@ -134,7 +135,7 @@ Page({
       periodTrend: [],
       minFinalPriceText: '',
       sampleNote: '',
-      windowPct: 10,
+      windowRank: 50,
       loading: false
     });
   },
@@ -284,9 +285,11 @@ Page({
         diff: (top.timesDiffText || '').replace('你', '')
       } : null,
       sampleNote: res.sample_insufficient
-        ? '同分位历史样本较少（' + (res.peer_count || 0) + ' 人），推荐仅供参考'
+        ? '同分位历史样本较少（窗口已扩至±' + (res.window_rank_used || 50) + '名，'
+          + (res.peer_count || 0) + ' 人），推荐仅供参考'
         : '',
-      windowPct: res.window_pct || 10,
+      windowRank: res.window_base || 50,
+      windowRankUsed: res.window_rank_used || res.window_base || 50,
       periodTrend,
       minFinalPriceText: toWan(res.min_final_price)
     };

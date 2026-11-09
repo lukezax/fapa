@@ -150,11 +150,11 @@ def calculate():
 
     times = data.get("times")
     reg_time = data.get("reg_time")
-    # 匹配窗口：用户分位 ±N 个百分点（默认 ±10%）
+    # 匹配窗口：与用户排名相邻的 ±N 名（默认 ±50 名起步，样本 <30 自动翻倍扩窗，上限 ±3000 名）
     try:
-        window_pct = min(50.0, max(1.0, float(data.get("window_pct", 10))))
+        window_base = min(3000, max(10, int(data.get("window_rank", 50))))
     except (TypeError, ValueError):
-        window_pct = 10.0
+        window_base = 50
 
     if not times or not reg_time:
         return {"error": "请填写次数和注册时间"}, 400
@@ -167,9 +167,22 @@ def calculate():
 
     user_pct = rank / GSXX_TOTAL * 100
 
-    pct_low = max(0.0, user_pct - window_pct)
-    pct_high = min(100.0, user_pct + window_pct)
     history_periods = len({w["result_zcid"] for w in winner_pool})
+
+    # 窗口自适应：±window_base 名起步，翻倍直到同分位样本 ≥30，上限 ±3000 名
+    window_used = window_base
+    pct_low = 0.0
+    pct_high = 0.0
+    while True:
+        pct_low = max(1, rank - window_used) / GSXX_TOTAL * 100
+        pct_high = min(GSXX_TOTAL, rank + window_used) / GSXX_TOTAL * 100
+        peer_sample = sum(
+            1 for w in winner_pool
+            if pct_low <= int(w["winner_rank"]) / int(w["total_bidders"]) * 100 <= pct_high
+        )
+        if peer_sample >= 30 or window_used >= 3000:
+            break
+        window_used = min(3000, window_used * 2)
 
     bracket_stats = {}
     for w in winner_pool:
@@ -426,7 +439,8 @@ def calculate():
         "latest_zcid": POOL_ZCID,
         "current_zcid": CURRENT_ZCID,
         "current_period": CURRENT_PERIOD,
-        "window_pct": window_pct,
+        "window_base": window_base,
+        "window_rank_used": window_used,
         "peer_count": total_matches,
         "sample_insufficient": total_matches < 30,
         "history_periods": history_periods,
