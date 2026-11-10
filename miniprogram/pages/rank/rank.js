@@ -1,5 +1,5 @@
-// pages/rank/rank.js — 排名查询（tab 首页）· v4 竞争力阶梯
-// 输入摇号次数 + 注册时间 → 精确排名 + 竞争力阶梯 + 前三档本期车型推荐
+// pages/rank/rank.js — 排名查询（tab 首页）· v4 中拍率阶梯
+// 输入摇号次数 + 注册时间 → 精确排名 + 各档中拍率 + 前三档本期车型推荐（按中拍率降序）
 const app = getApp();
 const { toWan } = require('../../utils/format');
 
@@ -212,7 +212,7 @@ Page({
       topCards,
       goodPicks,
       bandNote: '同类人 = 分位与你相近（±' + (res.band_half || 2.5) + '%）且排位不比你好的历史中拍者 '
-        + ((res.deep_count || 0)) + ' 人；竞争力分 = 近 4 期「同类获单 ÷ 同期档位成交」的期均'
+        + ((res.deep_count || 0)) + ' 人；中拍率 = 近 6 期「同类获单 ÷ 同期档位成交」的期均'
     };
   },
 

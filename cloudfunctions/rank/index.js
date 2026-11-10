@@ -5,9 +5,9 @@
 // 1. compute_rank：在"最新期次"资格池内 count(times > 输入) + count(times == 输入 AND reg_time < 输入) + 1
 // 2. 同类 = 当代"分位带"（用户分位 ±2.5 个百分点起步，带内中拍样本 <30 自动翻倍，上限 ±10 分位）
 // 3. 可达深度 = 同类中 分位 ≥ 用户分位（排位不比你好者）——强者的成交推不出用户可达
-// 4. 竞争力分（归一） = 近 4 期「每期可达深度同类获单 ÷ 同期该档总成交」的期均，消除期次供给规模差异
-// 5. 判定线 = 竞争力分 ≥ 0.3% 或 近4期同类获单 ≥ 3；本期无在售 ⛔
-// 6. 前三推荐 = 通过线的档位按价格升序取前三（用户目标：花最少钱买到）
+// 4. 中拍率（原竞争力分，归一） = 近 6 期「每期可达深度同类获单 ÷ 同期该档总成交」的期均，消除期次供给规模差异
+// 5. 判定线 = 中拍率 ≥ 0.3% 或 近6期同类获单 ≥ 5；本期无在售 ⛔
+// 6. 前三推荐 = 通过线的档位按中拍率降序取前三（用户口径：本期买哪个档位中拍率高）
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
@@ -152,9 +152,9 @@ async function calculate(event) {
   const bandAll = winnersPct.filter(w => userPct - half <= w.pct && w.pct < userPct + half);
   const deep = bandAll.filter(w => w.pct >= userPct); // 可达深度：排位不比你好
 
-  // 历史期次 + 近 4 期（代际对齐近期市场）
+  // 历史期次 + 近 6 期（代际对齐近期市场）
   const periods = [...new Set(winnersPct.map(w => w.zcid))].sort((a, b) => Number(a) - Number(b));
-  const recent = periods.slice(-4);
+  const recent = periods.slice(-6);
 
   // 每期每档总成交（竞争力分母）
   const bracketTotalsByPeriod = {};
@@ -186,8 +186,8 @@ async function calculate(event) {
   const bks = Object.keys(bkSet).sort((a, b) => bracketSortKey(a) - bracketSortKey(b));
 
   const ladder = bks.map(bk => {
-    let collected = [];      // 近4期中有该档成交的期 → n/T
-    let recentOrders = 0;    // 近4期可达深度同类获单总数
+    let collected = [];      // 近6期中有该档成交的期 → n/T
+    let recentOrders = 0;    // 近6期可达深度同类获单总数
     for (const z of recent) {
       const T = (bracketTotalsByPeriod[z] || {})[bk] || 0;
       const n = deep.filter(w => w.zcid === z && w.bracket === bk).length;
@@ -198,10 +198,10 @@ async function calculate(event) {
       ? collected.reduce((a, b) => a + b, 0) / collected.length * 100
       : 0;
     const supply = (carsByBracket[bk] || []).length;
-    const pass = supply > 0 && (scorePct >= 0.3 || recentOrders >= 3);
+    const pass = supply > 0 && (scorePct >= 0.3 || recentOrders >= 5);
     return {
       bracket: bk,
-      score_pct: Math.round(scorePct * 100) / 100,   // 竞争力分（归一后，%）
+      score_pct: Math.round(scorePct * 100) / 100,   // 中拍率（归一后，%）
       recent_orders: recentOrders,
       current_supply: supply,
       pass,
@@ -209,9 +209,9 @@ async function calculate(event) {
     };
   });
 
-  // 前三 = 通过线的档位按价格升序
+  // 前三 = 通过线的档位按中拍率降序
   const passing = ladder.filter(x => x.pass);
-  const top3 = passing.slice(0, 3);
+  const top3 = passing.slice().sort((a, b) => b.score_pct - a.score_pct).slice(0, 3);
   top3.forEach((x, i) => { x.star = i + 1; });
 
   // 本期车型推荐（每档起拍价最低 3 台，出价方式统一顶格）
@@ -221,7 +221,7 @@ async function calculate(event) {
     score_pct: x.score_pct,
     recent_orders: x.recent_orders,
     current_supply: x.current_supply,
-    thin: x.recent_orders < 3,
+    thin: x.recent_orders < 5,
     cars: (carsByBracket[x.bracket] || [])
       .sort((a, b) => a._sp - b._sp)
       .slice(0, 3)
@@ -270,13 +270,13 @@ async function calculate(event) {
   if (topRecommendations.length === 0) {
     verdict = '按你的分位，各价格档历史先例均不足，本期竞争力弱，建议降低预期或观望';
   } else if (topRecommendations.every(x => x.thin)) {
-    verdict = '仅在个别档位有少量历史先例，先例较少仅供参考，出价直接顶格';
+    verdict = '仅个别档位有少量历史先例，仅供参考，出价直接顶格';
   } else {
-    verdict = '按你的分位有竞争力阶梯可循，退而求其次首选「' + topRecommendations[0].bracket + '」，出价直接顶格';
+    verdict = '按你的分位，本期中拍率最高的是「' + topRecommendations[0].bracket + '」（' + topRecommendations[0].score_pct + '%），出价直接顶格';
   }
 
   return {
-    ver: 'v4.0.1',
+    ver: 'v4.2.0',
     rank,
     total,
     user_pct: Math.round(userPct * 10) / 10,
