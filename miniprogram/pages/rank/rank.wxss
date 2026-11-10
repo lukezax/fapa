@@ -449,3 +449,59 @@
   color: #2c3e50;
   line-height: 1.7;
 }
+
+/* ---------- 竞争力阶梯（v4） ---------- */
+.rank-ladder-row {
+  display: flex;
+  align-items: center;
+  padding: 14rpx 0;
+  border-bottom: 1rpx solid #f5f6fa;
+  font-size: 24rpx;
+  color: #2c3e50;
+}
+
+.rank-ladder-row:last-child {
+  border-bottom: none;
+}
+
+.rank-ladder-head {
+  color: #a0a0b0;
+  font-size: 22rpx;
+  border-bottom: 1rpx solid #f0f2f5;
+}
+
+.rank-ladder-bk {
+  flex: 0 0 140rpx;
+  color: #2c3e50;
+}
+
+.rank-ladder-col {
+  flex: 1;
+  color: #57606f;
+}
+
+.rank-ladder-last {
+  flex: 0 0 110rpx;
+  text-align: right;
+  color: #a0a0b0;
+  font-size: 22rpx;
+}
+
+.rank-ladder-bk-hot {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.rank-ladder-star {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.rank-ladder-no {
+  color: #a0a0b0;
+  font-size: 22rpx;
+}
+
+.rank-ladder-dim {
+  opacity: 0.55;
+}

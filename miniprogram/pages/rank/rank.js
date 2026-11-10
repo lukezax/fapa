@@ -1,8 +1,7 @@
-// pages/rank/rank.js — 排名查询（tab 首页）
-// 输入摇号次数 + 注册时间 → 精确排名 + 各价格档位推荐 + 期次趋势
+// pages/rank/rank.js — 排名查询（tab 首页）· v4 竞争力阶梯
+// 输入摇号次数 + 注册时间 → 精确排名 + 竞争力阶梯 + 前三档本期车型推荐
 const app = getApp();
-const { PRICE_BRACKETS } = require('../../utils/constants');
-const { toWan, formatPeriod } = require('../../utils/format');
+const { toWan } = require('../../utils/format');
 
 Page({
   data: {
@@ -13,13 +12,10 @@ Page({
     regMs: '000',
     loading: false,
     result: null,
-    panoramaRows: [],
-    bracketCards: [],
-    periodTrend: [],
-    minFinalPriceText: '',
-    sampleNote: '',
-    windowRank: 50,
-    windowRankUsed: 50
+    verdict: '',
+    ladderRows: [],
+    topCards: [],
+    bandNote: ''
   },
 
   // 从 mine 页历史点击进入：options.times / options.reg_time（已 encodeURIComponent）
@@ -101,23 +97,25 @@ Page({
   doQuery(times, regTimeFull) {
     this.setData({ loading: true });
     this._lastQuery = { times, regTimeFull };
-    app.callFunction('rank', { times, reg_time: regTimeFull, window_rank: 50 })
+    app.callFunction('rank', { times, reg_time: regTimeFull })
       .then(res => {
         // fire-and-forget 保存历史（静默失败）
+        const first = (res.top_recommendations || [])[0];
         app.callFunction('histories', {
           method: 'add',
           times,
           reg_time: regTimeFull,
           summary: '排名 ' + res.rank + ' / 共 ' + res.total + ' 人'
+            + (first ? ' · 竞争力首推 ' + first.bracket : '')
         }).catch(() => {});
 
         const decorated = this.decorateResult(res);
         this.setData({
           result: res,
-          panoramaRows: decorated.panoramaRows,
-          bracketCards: decorated.bracketCards,
-          periodTrend: decorated.periodTrend,
-          minFinalPriceText: decorated.minFinalPriceText,
+          verdict: decorated.verdict,
+          ladderRows: decorated.ladderRows,
+          topCards: decorated.topCards,
+          bandNote: decorated.bandNote,
           loading: false
         });
       })
@@ -130,12 +128,10 @@ Page({
   onReset() {
     this.setData({
       result: null,
-      panoramaRows: [],
-      bracketCards: [],
-      periodTrend: [],
-      minFinalPriceText: '',
-      sampleNote: '',
-      windowRank: 50,
+      verdict: '',
+      ladderRows: [],
+      topCards: [],
+      bandNote: '',
       loading: false
     });
   },
@@ -157,141 +153,50 @@ Page({
       };
     }
     const r = this.data.result;
-    const top = (this.data.bracketCards && this.data.bracketCards[0]) || null;
+    const first = (this.data.topCards && this.data.topCards[0]) || null;
     const title = '我的位置：第' + r.rank + '名/共' + r.total + '人（前' + r.user_pct + '%）'
-      + (top ? '，重点关注「' + top.bracket + '」' : '');
+      + (first ? '，竞争力首推「' + first.bracket + '」' : '');
     const path = '/pages/rank/rank?times=' + encodeURIComponent(this._lastQuery.times)
       + '&reg_time=' + encodeURIComponent(this._lastQuery.regTimeFull);
     return { title, path };
   },
 
   // ---------- 数据加工 ----------
-  // 全景图：与 PRICE_BRACKETS 9 档对齐，panorama 缺失的档补 0 灰条，多出的档追加在后
-  alignPanorama(panorama) {
-    const list = panorama || [];
-    const byBracket = {};
-    list.forEach(p => { byBracket[p.bracket] = p; });
-    const rows = [];
-    PRICE_BRACKETS.forEach(b => {
-      const p = byBracket[b];
-      rows.push(p ? this.panoRow(p) : { bracket: b, success_rate: 0, barClass: 'rank-bar-gray' });
-    });
-    list.forEach(p => {
-      if (PRICE_BRACKETS.indexOf(p.bracket) === -1) rows.push(this.panoRow(p));
-    });
-    return rows;
-  },
-
-  panoRow(p) {
-    const pct = Math.min(100, p.success_rate || 0);
-    return {
-      bracket: p.bracket,
-      success_rate: pct,
-      barClass: this.barClassFor(pct)
-    };
-  },
-
-  barClassFor(pct) {
-    if (pct >= 70) return 'rank-bar-red';
-    if (pct >= 40) return 'rank-bar-orange';
-    return 'rank-bar-gray';
-  },
-
-  decorateBracket(p, userTimes, historyPeriods) {
-    const topBrands = p.top_brands || {};
-    const brandChips = Object.keys(topBrands)
-      .slice(0, 5)
-      .map(brand => ({ brand, count: topBrands[brand] }));
-    const top5 = (p.top5 || []).map(m => ({
-      car_name: m.car_name,
-      car_link: m.car_link,
-      final_price_text: toWan(m.final_price),
-      times_text: (m.winner_times || 0) + '次',
-      result_zcid: m.result_zcid
-    }));
-    const avgTimes = p.avg_winner_times || 0;
-    const diff = Math.round(((userTimes || 0) - avgTimes) * 10) / 10;
-    const currentCars = (p.current_cars || []).map(c => ({
-      car_name: c.car_name,
-      car_link: c.car_link,
-      start_text: toWan(c.start_price),
-      pred_text: c.predicted_final_price ? '预计 ' + toWan(c.predicted_final_price) : '',
-      bid_text: c.suggested_bid != null
-        ? '建议 ' + toWan(c.suggested_bid) + (c.capped ? '（顶格）' : '')
-          + (c.success_rate != null ? ' · 成功率 ' + c.success_rate + '%' : '')
-        : '',
-      meta: [c.fuel_type, c.mileage_km ? (c.mileage_km / 10000).toFixed(1) + '万km' : '']
-        .filter(Boolean).join(' · ')
-    }));
-    return {
-      bracket: p.bracket,
-      recommendation: p.recommendation || '',
-      recClass: this.recClassFor(p.recommendation),
-      successText: (p.success_rate || 0) + '%',
-      coverText: (p.periods_covered || 0) + '/' + (historyPeriods || 15) + ' 期',
-      match_count: p.match_count || 0,
-      avgFinalText: toWan(p.avg_final_price),
-      avgTimesText: avgTimes ? String(avgTimes) : '—',
-      timesDiffText: avgTimes && userTimes ? '你' + (diff >= 0 ? '+' : '') + diff + '次' : '',
-      timesDiffClass: diff >= 0 ? 'rank-diff-plus' : 'rank-diff-minus',
-      periods_covered: p.periods_covered || 0,
-      brandChips,
-      currentCars,
-      top5
-    };
-  },
-
-  recClassFor(rec) {
-    switch (rec) {
-      case '强烈推荐': return 'rank-rec-strong';
-      case '推荐': return 'rank-rec-good';
-      case '可考虑': return 'rank-rec-maybe';
-      default: return 'rank-rec-wait';
-    }
-  },
-
   decorateResult(res) {
-    const userTimes = parseInt(this.data.times, 10) || 0;
-    const historyPeriods = res.history_periods || 15;
-    const panoramaRows = this.alignPanorama(res.panorama);
-    const bracketCards = (res.panorama || []).map(p => this.decorateBracket(p, userTimes, historyPeriods));
-    const periodTrend = (res.period_trend || []).map(t => {
-      const row = {
-        zcid: t.zcid,
-        zcid_text: formatPeriod(t.zcid),
-        total_bidders: t.total_bidders,
-        winner_count: t.winner_count,
-        user_equiv_rank: t.user_equiv_rank,
-        matched_car: null
-      };
-      if (t.matched_car) {
-        row.matched_car = {
-          car_name: t.matched_car.car_name,
-          car_link: t.matched_car.car_link,
-          final_price_text: toWan(t.matched_car.final_price)
-        };
-      }
-      return row;
-    });
-    const top = bracketCards[0] || null;
+    const ladder = res.ladder || [];
+    const ladderRows = ladder.map(x => ({
+      bracket: x.bracket,
+      score_text: (x.score_pct != null ? x.score_pct : 0).toFixed(2) + '%',
+      recent_orders: x.recent_orders || 0,
+      supply: x.current_supply || 0,
+      star: x.star || 0,
+      pass: !!x.pass,
+      noSupply: x.fail === 'no_supply',
+      thin: x.pass && (x.recent_orders || 0) < 3
+    }));
+
+    const topCards = (res.top_recommendations || []).map(rec => ({
+      star: rec.star,
+      bracket: rec.bracket,
+      score_text: (rec.score_pct != null ? rec.score_pct : 0).toFixed(2) + '%',
+      recent_orders: rec.recent_orders || 0,
+      thin: rec.recent_orders < 3,
+      cars: (rec.cars || []).map(c => ({
+        car_name: c.car_name,
+        car_link: c.car_link,
+        start_text: toWan(c.start_price),
+        limit_text: c.limit_price != null ? '顶格 ' + toWan(c.limit_price) : '顶格出价',
+        meta: [c.fuel_type, c.mileage_km ? (c.mileage_km / 10000).toFixed(1) + '万km' : '']
+          .filter(Boolean).join(' · ')
+      }))
+    }));
+
     return {
-      panoramaRows,
-      bracketCards,
-      topAdvice: top ? {
-        bracket: top.bracket,
-        success: top.successText,
-        cover: top.coverText,
-        times: top.avgTimesText,
-        diff: (top.timesDiffText || '').replace('你', '')
-      } : null,
-      sampleNote: res.sample_insufficient
-        ? '同分位历史样本较少（窗口已扩至±' + (res.window_rank_used || 50) + '名，'
-          + (res.peer_count || 0) + ' 人），推荐仅供参考'
-        : '',
-      windowRank: res.window_base || 50,
-      windowRankUsed: res.window_rank_used || res.window_base || 50,
-      periodTrend,
-      minFinalPriceText: toWan(res.min_final_price)
+      verdict: (res.overall && res.overall.verdict) || '',
+      ladderRows,
+      topCards,
+      bandNote: '同类人 = 分位与你相近（±' + (res.band_half || 2.5) + '%）且排位不比你好的历史中拍者 '
+        + ((res.deep_count || 0)) + ' 人；竞争力分 = 近 4 期「同类获单 ÷ 同期档位成交」的期均'
     };
   },
 

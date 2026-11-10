@@ -1,4 +1,4 @@
-<!-- pages/rank/rank.wxml — 排名查询 -->
+<!-- pages/rank/rank.wxml — 排名查询 · v4 竞争力阶梯 -->
 <view class="container">
 
   <!-- 输入区（查询成功后隐藏，可点"重新查询"返回） -->
@@ -42,137 +42,71 @@
         <text class="rank-rank-num">{{result.rank}}</text>
         <text class="rank-rank-suffix">名</text>
       </view>
-      <view class="rank-rank-sub">共 {{result.total}} 人参与</view>
-      <view class="rank-rank-stats">
-        <view class="rank-stat">
-          <text class="rank-stat-val">{{result.user_pct}}%</text>
-          <text class="rank-stat-label">排名百分比</text>
-        </view>
-        <view class="rank-stat">
-          <text class="rank-stat-val">{{result.total_matches}}</text>
-          <text class="rank-stat-label">匹配车辆</text>
-        </view>
-        <view class="rank-stat">
-          <text class="rank-stat-val rank-stat-red">{{minFinalPriceText}}</text>
-          <text class="rank-stat-label">最低成交价</text>
-        </view>
-      </view>
+      <view class="rank-rank-sub">共 {{result.total}} 人参与 · 前 {{result.user_pct}}%</view>
       <button class="rank-share-btn" open-type="share">分享这个结果</button>
     </view>
 
-    <!-- 综合建议 -->
-    <view class="rank-advice" wx:if="{{topAdvice}}">
-      <text class="rank-advice-label">综合建议</text>
-      <text class="rank-advice-text">优先关注「{{topAdvice.bracket}}」——本期成功率约 {{topAdvice.success}}（{{topAdvice.cover}}）· 该档成交者平均 {{topAdvice.times}} 次{{topAdvice.diff ? '（你' + topAdvice.diff + '）' : ''}}</text>
+    <!-- 综合判词 -->
+    <view class="rank-advice">
+      <text class="rank-advice-label">结论</text>
+      <text class="rank-advice-text">{{verdict}}</text>
     </view>
-    <view class="rank-advice" wx:if="{{sampleNote}}">
-      <text class="rank-advice-label">提示</text>
-      <text class="rank-advice-text">{{sampleNote}}</text>
+    <view class="rank-advice" wx:if="{{bandNote}}">
+      <text class="rank-advice-label">口径</text>
+      <text class="rank-advice-text">{{bandNote}}</text>
+    </view>
+
+    <!-- 前三推荐：本期车型 -->
+    <block wx:if="{{topCards.length}}">
+      <view class="card" wx:for="{{topCards}}" wx:for-item="rec" wx:key="bracket">
+        <view class="rank-bk-head">
+          <text class="rank-bk-title">★{{rec.star}} {{rec.bracket}}</text>
+          <text class="tag rank-rec-strong">竞争力 {{rec.score_text}} · 近4期同类成交 {{rec.recent_orders}} 单</text>
+        </view>
+        <view class="rank-bk-current">
+          <view class="rank-bk-top5-title">本期在售 · 起拍价最低 {{rec.cars.length}} 台（出价方式：直接顶格）</view>
+          <view class="rank-car-row" wx:for="{{rec.cars}}" wx:for-item="m" wx:key="car_link"
+            bindtap="onCarTap" data-link="{{m.car_link}}">
+            <text class="rank-car-name">{{m.car_name}}</text>
+            <text class="rank-car-times" wx:if="{{m.meta}}">{{m.meta}}</text>
+            <text class="rank-car-price">起 {{m.start_text}}</text>
+            <text class="rank-car-times">{{m.limit_text}}</text>
+            <text class="rank-car-arrow">›</text>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <!-- 竞争力阶梯（全部档位，纯价格维度） -->
+    <view class="card">
+      <view class="card-title">竞争力阶梯（历史口径）</view>
+      <view class="rank-ladder-row rank-ladder-head">
+        <text class="rank-ladder-bk">档位</text>
+        <text class="rank-ladder-col">竞争力分</text>
+        <text class="rank-ladder-col">近4期获单</text>
+        <text class="rank-ladder-col">本期在售</text>
+        <text class="rank-ladder-last">判定</text>
+      </view>
+      <view class="rank-ladder-row {{item.pass ? '' : 'rank-ladder-dim'}}" wx:for="{{ladderRows}}" wx:key="bracket">
+        <text class="rank-ladder-bk {{item.pass ? 'rank-ladder-bk-hot' : ''}}">{{item.bracket}}</text>
+        <text class="rank-ladder-col">{{item.score_text}}</text>
+        <text class="rank-ladder-col">{{item.recent_orders}}</text>
+        <text class="rank-ladder-col">{{item.supply}}</text>
+        <text class="rank-ladder-last">
+          <text wx:if="{{item.star}}" class="rank-ladder-star">★{{item.star}}</text>
+          <text wx:elif="{{item.noSupply}}" class="rank-ladder-no">无在售</text>
+          <text wx:else class="rank-ladder-no">先例不足</text>
+        </text>
+      </view>
+      <view class="empty" wx:if="{{!ladderRows.length}}">暂无档位数据</view>
     </view>
 
     <!-- 数据口径说明 -->
     <view class="card rank-rules">
       <view class="card-title">数据口径</view>
-      <view class="rank-rules-line">· 车辆普遍按公布的最高限价成交，最终归属由排序决定：摇号次数多者优先，同次数比注册时间先后</view>
-      <view class="rank-rules-line">· 匹配策略：在历史各期中找到排名与你相近（±{{windowRankUsed||50}}名，样本不足自动翻倍扩窗）的成交者，看他们成交了哪些车</view>
-      <view class="rank-rules-line">· 本期成功率：历史 15 期中同分位者买到该档位车的期次占比，再按本期最高限价能否出到历史溢价修正；≥75% 强烈推荐 / 55-74% 推荐 / 35-54% 可考虑 / 低于35% 观望</view>
-    </view>
-
-    <!-- 全景图卡片 -->
-    <view class="card">
-      <view class="card-title">价格档位全景（本期成功率）</view>
-      <view class="rank-pano-row" wx:for="{{panoramaRows}}" wx:key="bracket">
-        <view class="rank-pano-head">
-          <text class="rank-pano-bracket">{{item.bracket}}</text>
-          <text class="rank-pano-pct">{{item.success_rate}}%</text>
-        </view>
-        <view class="rank-pano-track">
-          <view class="rank-pano-bar {{item.barClass}}" style="width: {{item.success_rate}}%;"></view>
-        </view>
-      </view>
-      <view class="empty" wx:if="{{!panoramaRows.length}}">暂无档位数据</view>
-    </view>
-
-    <!-- 档位卡片（按 panorama 顺序） -->
-    <block wx:if="{{bracketCards.length}}">
-      <view class="card" wx:for="{{bracketCards}}" wx:for-item="bk" wx:key="bracket">
-        <view class="rank-bk-head">
-          <text class="rank-bk-title">{{bk.bracket}}</text>
-          <text class="tag {{bk.recClass}}" wx:if="{{bk.recommendation}}">{{bk.recommendation}}</text>
-        </view>
-
-        <view class="rank-bk-stats">
-          <view class="rank-bk-stat">
-            <text class="rank-bk-stat-num">{{bk.match_count}}</text>
-            <text class="rank-bk-stat-label">同分位成交</text>
-          </view>
-          <view class="rank-bk-stat">
-            <text class="rank-bk-stat-num">{{bk.avgFinalText}}</text>
-            <text class="rank-bk-stat-label">平均成交价</text>
-          </view>
-          <view class="rank-bk-stat">
-            <text class="rank-bk-stat-num">{{bk.avgTimesText}}</text>
-            <text class="rank-bk-stat-label">成交者平均次数</text>
-            <text class="rank-bk-diff {{bk.timesDiffClass}}" wx:if="{{bk.timesDiffText}}">{{bk.timesDiffText}}</text>
-          </view>
-          <view class="rank-bk-stat">
-            <text class="rank-bk-stat-num rank-stat-red">{{bk.successText}}</text>
-            <text class="rank-bk-stat-label">成功率 · {{bk.coverText}}</text>
-          </view>
-        </view>
-
-        <!-- 本期在售（起拍价最低优先，可点进详情） -->
-        <view class="rank-bk-current" wx:if="{{bk.currentCars.length}}">
-          <view class="rank-bk-top5-title">本期在售 · 起拍价最低 {{bk.currentCars.length}} 台</view>
-          <view class="rank-car-row" wx:for="{{bk.currentCars}}" wx:for-item="m" wx:key="car_link"
-            bindtap="onCarTap" data-link="{{m.car_link}}">
-            <text class="rank-car-name">{{m.car_name}}</text>
-            <text class="rank-car-times" wx:if="{{m.meta}}">{{m.meta}}</text>
-            <text class="rank-car-price">起 {{m.start_text}}</text>
-            <text class="rank-car-times" wx:if="{{m.bid_text}}">{{m.bid_text}}</text>
-            <text class="rank-car-arrow">›</text>
-          </view>
-        </view>
-
-        <view class="rank-bk-brands" wx:if="{{bk.brandChips.length}}">
-          <text class="rank-bk-brands-label">热门品牌</text>
-          <view class="rank-bk-chips">
-            <text class="rank-chip" wx:for="{{bk.brandChips}}" wx:for-item="chip" wx:key="brand">{{chip.brand}}×{{chip.count}}</text>
-          </view>
-        </view>
-
-        <!-- 历史成交参考：不可点击，仅用于说明推荐依据 -->
-        <view class="rank-bk-top5" wx:if="{{bk.top5.length}}">
-          <view class="rank-bk-top5-title">历史成交参考 · 同排位最便宜 5 台</view>
-          <view class="rank-car-row rank-car-row-static" wx:for="{{bk.top5}}" wx:for-item="m" wx:key="car_link">
-            <text class="rank-car-name">{{m.car_name}}</text>
-            <text class="rank-car-times">{{m.times_text}}</text>
-            <text class="rank-car-price">{{m.final_price_text}}</text>
-            <text class="rank-car-zcid">{{m.result_zcid}}</text>
-          </view>
-        </view>
-      </view>
-    </block>
-    <view class="empty" wx:else>暂无档位数据</view>
-
-    <!-- 期次趋势卡片 -->
-    <view class="card">
-      <view class="card-title">期次趋势</view>
-      <view class="rank-trend-row" wx:for="{{periodTrend}}" wx:key="zcid">
-        <view class="rank-trend-head">
-          <text class="rank-trend-zcid">{{item.zcid_text}}</text>
-          <text class="rank-trend-meta">总人数 {{item.total_bidders}} · 成交 {{item.winner_count}} · 等效排名 {{item.user_equiv_rank}}</text>
-        </view>
-        <view class="rank-trend-car" wx:if="{{item.matched_car}}"
-          bindtap="onCarTap" data-link="{{item.matched_car.car_link}}">
-          <text class="rank-trend-car-label">最接近：</text>
-          <text class="rank-trend-car-name">{{item.matched_car.car_name}}</text>
-          <text class="rank-trend-car-price">{{item.matched_car.final_price_text}}</text>
-          <text class="rank-car-arrow">›</text>
-        </view>
-        <view class="rank-trend-car" wx:else>—</view>
-      </view>
-      <view class="empty" wx:if="{{!periodTrend.length}}">暂无期次数据</view>
+      <view class="rank-rules-line">· 车辆按公布的最高限价顶格成交（历史溢价恒为 1.50），最终归属由排序决定：摇号次数多者优先，同次数比注册时间先后</view>
+      <view class="rank-rules-line">· 竞争力分：与你分位相近、排位不比你好的人（同类），近 4 期在其档位总成交中占的份额期均；只反映历史先例，不保证当期结果</view>
+      <view class="rank-rules-line">· 判定线：竞争力分 ≥ 0.3% 或 近4期同类获单 ≥ 3；通过者按价格升序给出前三推荐，出价方式统一直接顶格</view>
     </view>
   </block>
 

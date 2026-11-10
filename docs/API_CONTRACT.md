@@ -203,3 +203,37 @@ const AD_UNITS = {
   interstitial: "adunit-xxxxxxxx"     // 开屏替代（插屏）
 };
 ```
+
+---
+## v4.0（2026-11-10 · 仅小程序端先行）
+
+> rank 云函数升级为「竞争力阶梯 v4」：纯价格维度，去品牌、去 suggested_bid/predicted_final_price、
+> 去成功率/期次趋势。webapp 暂保持 v3.2 自有 Flask 逻辑不受影响；后续跟进时再合并。
+
+### rank.calculate 新出参
+```
+ver: 'v4.0.1'
+rank, total, user_pct,
+band_half,          // 同类分位带宽（±2.5 起步，翻倍扩窗至样本≥30，上限 ±10）
+band_sample,        // 带内历史中拍样本数
+deep_count,         // 可达深度（分位≥用户）同类人数
+recent_periods: [], // 近 4 期 zcid（代际对齐）
+ladder: [{          // 按档位价格升序
+  bracket, score_pct,       // 竞争力分 = 近4期「每期可达深度同类获单÷同期档成交」期均（%）
+  recent_orders,            // 近4期可达深度同类获单数
+  current_supply,           // 本期在售台数
+  pass, fail, star          // 判定线: score≥0.3 或 recent_orders≥3 且有在售; star=前三序号(1-3)
+}],
+top_recommendations: [{     // 通过线的前三档（价格升序）
+  bracket, star, score_pct, recent_orders, current_supply, thin,
+  cars: [{ car_name, car_link, start_price, limit_price, mileage_km, fuel_type }]   // 起拍价最低3台
+}],
+overall: { has_pass, verdict }
+```
+
+### 小程序 rank 页删除模块
+价格档位全景、档位卡片（热门品牌/历史成交参考 top5）、期次趋势（往期成交举例）。
+
+### 已修复
+- bracketSortKey 被误用作 sort 比较器（返回排序键而非差值），V8 稳定排序导致档位顺序完全乱序、
+  前三推荐选错档——改为 `.sort((a,b)=>bracketSortKey(a)-bracketSortKey(b))`。
