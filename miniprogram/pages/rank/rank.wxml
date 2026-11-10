@@ -101,6 +101,26 @@
       <view class="empty" wx:if="{{!ladderRows.length}}">暂无档位数据</view>
     </view>
 
+    <!-- 好车推荐（每个价格档位按优先级评选） -->
+    <view class="card" wx:if="{{goodPicks.length}}">
+      <view class="card-title">好车推荐</view>
+      <view class="rank-good-note">按优先级评选：排放国四及以上且无抵押 › 有钥匙 › 有车牌 › 额外费用低 › 证件拍照齐全，每档取前 2 台</view>
+      <view class="rank-good-bk" wx:for="{{goodPicks}}" wx:for-item="g" wx:key="bracket">
+        <view class="rank-good-bk-name">{{g.bracket}}</view>
+        <view class="rank-car-row" wx:for="{{g.cars}}" wx:for-item="m" wx:key="car_link"
+          bindtap="onCarTap" data-link="{{m.car_link}}">
+          <view class="rank-good-main">
+            <text class="rank-car-name">{{m.car_name}}</text>
+            <view class="rank-chips" wx:if="{{m.tags.length}}">
+              <text class="rank-chip-hi" wx:for="{{m.tags}}" wx:for-item="t" wx:key="*this">{{t}}</text>
+            </view>
+          </view>
+          <text class="rank-car-price">限 {{m.limit_text}}</text>
+          <text class="rank-car-arrow">›</text>
+        </view>
+      </view>
+    </view>
+
     <!-- 数据口径说明 -->
     <view class="card rank-rules">
       <view class="card-title">数据口径</view>

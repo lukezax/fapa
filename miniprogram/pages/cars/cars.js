@@ -15,13 +15,14 @@ function defaultFilters() {
   return {
     brand: [], court: [], fuel_type: [], emission: [],
     has_license: null, has_registration: null, has_plate: null, has_key: null, is_mortgaged: null,
-    final_price_min: '', final_price_max: '',
+    limit_price_min: '', limit_price_max: '',
     violation_min: '', violation_max: '',
     mileage_max: '',
     parking_max: '', repair_max: '', deposit_max: '', extra_fee_max: ''
   };
 }
 
+// 证件 + 抵押三态段
 function defaultSegments() {
   return [
     { key: 'has_license', label: '行驶证', value: null, yes: '有', no: '无' },
@@ -44,12 +45,11 @@ Page({
     fuelChips: [],
     emissionChips: [],
     sorts: [
-      { key: 'start_price', label: '起拍价' },
-      { key: 'final_price', label: '成交价' },
+      { key: 'limit_price', label: '最高限价' },
       { key: 'mileage_km', label: '里程' },
       { key: 'violation_count', label: '违章数' }
     ],
-    sort: 'start_price',
+    sort: 'limit_price',
     dir: 'asc',
     cars: [],
     total: 0,
@@ -118,8 +118,7 @@ Page({
     }
     return {
       ...c,
-      startText: toWan(c.start_price),
-      finalText: toWan(c.final_price),
+      limitText: c.limit_price != null && c.limit_price !== '' ? toWan(c.limit_price) : '—',
       mileageText: c.mileage_km ? (c.mileage_km / 10000).toFixed(1) + '万km' : '—',
       violationText: formatViolation(c.violation_count, c.violation_points, c.violation_fine),
       periodText: formatPeriod(c.period),

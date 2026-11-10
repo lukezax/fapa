@@ -19,6 +19,42 @@ function bracketSortKey(b) {
   return m ? parseInt(m[1], 10) : 9999;
 }
 
+// 好车优先级（用户口径，命中越多越靠前，字典序比较）：
+// 1. 排放国三以上（不含，即国四/国五/国六）且无抵押
+// 2. 有钥匙
+// 3. 有车牌
+// 4. 额外费用低于 1000
+// 5. 证件拍照齐全（行驶证 + 登记证）
+const GOOD_FEE_LIMIT = 1000;
+
+function goodCriteria(c) {
+  return [
+    (c.emission_standard === '国四' || c.emission_standard === '国五' || c.emission_standard === '国六')
+      && c.is_mortgaged === '否' ? 1 : 0,
+    c.has_key === '有' ? 1 : 0,
+    c.has_plate === '有' ? 1 : 0,
+    (c.total_extra_fee != null && c.total_extra_fee !== '' && parseFloat(c.total_extra_fee) < GOOD_FEE_LIMIT) ? 1 : 0,
+    (c.has_license === '有' && c.has_registration === '有') ? 1 : 0
+  ];
+}
+
+function goodTags(sc, c) {
+  const tags = [];
+  if (sc[0]) tags.push(c.emission_standard + '·无抵押');
+  if (sc[1]) tags.push('有钥匙');
+  if (sc[2]) tags.push('有车牌');
+  if (sc[3]) tags.push('额外费用低');
+  if (sc[4]) tags.push('证照齐全');
+  return tags;
+}
+
+function cmpGoodScore(a, b) {
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return b[i] - a[i];
+  }
+  return 0;
+}
+
 // reg_time 归一化（与 import_db.py 一致：去冒号/点号后空格）
 function normalizeRegTime(rt) {
   return String(rt || '').replace(/:\s/g, ':').replace(/\.\s/g, '.').trim();
@@ -202,6 +238,33 @@ async function calculate(event) {
       })
   }));
 
+  // 好车推荐：每个价格档位按优先级元组评选，取前 2 台（命中优先级需 ≥1，否则视为无亮点车）
+  const goodPicks = bks
+    .map(bk => ({
+      bracket: bk,
+      cars: (carsByBracket[bk] || [])
+        .map(c => {
+          const sc = goodCriteria(c);
+          const lp = c.limit_price != null && c.limit_price !== '' ? parseFloat(c.limit_price) : null;
+          return {
+            score: sc,
+            tags: goodTags(sc, c),
+            car_name: c.car_name,
+            car_link: c.car_link,
+            start_price: c.start_price,
+            start_num: c._sp,
+            limit_price: lp != null && !isNaN(lp) ? lp : null,
+            mileage_km: c.mileage_km,
+            fuel_type: c.fuel_type
+          };
+        })
+        .filter(x => x.score.some(v => v === 1))
+        .sort((a, b) => cmpGoodScore(a.score, b.score) || a.start_num - b.start_num)
+        .slice(0, 2)
+        .map(({ score, start_num, ...rest }) => rest)
+    }))
+    .filter(x => x.cars.length > 0);
+
   // 整体判词
   let verdict;
   if (topRecommendations.length === 0) {
@@ -223,6 +286,7 @@ async function calculate(event) {
     recent_periods: recent,
     ladder,
     top_recommendations: topRecommendations,
+    good_picks: goodPicks,
     overall: { has_pass: topRecommendations.length > 0, verdict },
     latest_zcid: latestZcid,
     current_zcid: CURRENT_ZCID,

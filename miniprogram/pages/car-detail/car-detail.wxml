@@ -27,12 +27,8 @@
     <view class="card price-card">
       <view class="price-row">
         <view class="price-item">
-          <view class="price-label">起拍价</view>
-          <view class="price-value">{{display.startText}}</view>
-        </view>
-        <view class="price-item">
-          <view class="price-label">成交价</view>
-          <view class="price-value price-final">{{display.finalText}}</view>
+          <view class="price-label">最高限价</view>
+          <view class="price-value price-final">{{display.limitText}}</view>
         </view>
       </view>
     </view>

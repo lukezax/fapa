@@ -54,8 +54,7 @@ Page({
     const winnerPct = winner && winner.total_bidders
       ? (winner.winner_rank / winner.total_bidders * 100).toFixed(1) : '';
     const display = {
-      startText: toWan(car.start_price),
-      finalText: toWanWithComma(car.final_price),
+      limitText: toWanWithComma(car.limit_price),
       licenseText: yesNo(car.has_license),
       registrationText: yesNo(car.has_registration),
       plateText: yesNo(car.has_plate),
@@ -125,9 +124,9 @@ Page({
       return { title: '京慧车讯 · 在历史成交数据中找到适合你的车', path: '/pages/intro/intro' };
     }
     const name = car.car_name.length > 24 ? car.car_name.slice(0, 24) + '…' : car.car_name;
-    const price = car.final_price ? (car.final_price / 10000).toFixed(1) + '万' : '';
+    const price = car.limit_price ? (car.limit_price / 10000).toFixed(1) + '万' : '';
     return {
-      title: name + (price ? ' 成交价 ' + price : ''),
+      title: name + (price ? ' 最高限价 ' + price : ''),
       path: '/pages/car-detail/car-detail?car_link=' + encodeURIComponent(this.carLink)
     };
   }

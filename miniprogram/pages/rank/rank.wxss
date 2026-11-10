@@ -505,3 +505,50 @@
 .rank-ladder-dim {
   opacity: 0.55;
 }
+
+/* ---------- 好车推荐（v4.1） ---------- */
+.rank-good-note {
+  font-size: 22rpx;
+  color: #a0a0b0;
+  margin-bottom: 16rpx;
+  line-height: 1.6;
+}
+
+.rank-good-bk {
+  padding: 8rpx 0 16rpx;
+}
+
+.rank-good-bk-name {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 6rpx;
+}
+
+.rank-good-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.rank-chips {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 4rpx;
+}
+
+.rank-chip-hi {
+  font-size: 20rpx;
+  color: #e74c3c;
+  background: #fdefec;
+  border-radius: 8rpx;
+  padding: 2rpx 10rpx;
+  margin-right: 8rpx;
+  margin-top: 4rpx;
+}
+
+.rank-car-price {
+  flex-shrink: 0;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #e74c3c;
+}

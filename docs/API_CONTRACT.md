@@ -237,3 +237,32 @@ overall: { has_pass, verdict }
 ### 已修复
 - bracketSortKey 被误用作 sort 比较器（返回排序键而非差值），V8 稳定排序导致档位顺序完全乱序、
   前三推荐选错档——改为 `.sort((a,b)=>bracketSortKey(a)-bracketSortKey(b))`。
+
+---
+## v4.1（2026-11-10 · 仅小程序端）
+
+### 好车推荐（rank.calculate 新出参 `good_picks`）
+价格无关的新增板块：**每个价格档位**按以下优先级（字典序元组，命中需 ≥1）评选，
+元组相同时起拍价低者优先，每档取前 2 台：
+
+1. 排放国三以上（不含国三，即国四/国五/国六）且 `is_mortgaged==='否'` → 标签「国五·无抵押」
+2. `has_key==='有'` → 「有钥匙」
+3. `has_plate==='有'` → 「有车牌」
+4. `total_extra_fee < 1000` → 「额外费用低」
+5. `has_license==='有' 且 has_registration==='有'` → 「证照齐全」
+
+```
+good_picks: [{
+  bracket,
+  cars: [{ car_name, car_link, start_price, limit_price, mileage_km, fuel_type, tags: [] }]
+}]   // 本期在售 0 台的档位自动不出现
+```
+
+小程序 rank 页在「竞争力阶梯」下方新增「好车推荐」卡片，点车进详情。
+
+### 小程序端价格口径统一为「最高限价」
+- **cars 列表页**：排序项「起拍价/成交价」→ 仅「最高限价」（默认升序）；价格区间筛选
+  `final_price_min/max` → `limit_price_min/max`（映射 `limit_price` 字段）；列表价格行只显示「限价 X 万」。
+- **car-detail 页**：起拍价/成交价双卡 → 单一「最高限价」卡；分享标题改「最高限价 X 万」。
+- **cars 云函数**：`buildWhere` 价格区间 `['final_price_min','final_price_max','final_price']`
+  → `['limit_price_min','limit_price_max','limit_price']`。

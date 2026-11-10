@@ -92,14 +92,14 @@
       </view>
       <!-- 价格区间（元） -->
       <view class="filter-group">
-        <view class="filter-label">成交价（元）</view>
+        <view class="filter-label">最高限价（元）</view>
         <view class="range-row">
           <input
             class="range-input"
             type="number"
             placeholder="最低"
-            data-key="final_price_min"
-            value="{{filters.final_price_min}}"
+            data-key="limit_price_min"
+            value="{{filters.limit_price_min}}"
             bindinput="onInput"
           />
           <text class="range-sep">—</text>
@@ -107,8 +107,8 @@
             class="range-input"
             type="number"
             placeholder="最高"
-            data-key="final_price_max"
-            value="{{filters.final_price_max}}"
+            data-key="limit_price_max"
+            value="{{filters.limit_price_max}}"
             bindinput="onInput"
           />
         </view>
@@ -244,8 +244,7 @@
       </view>
       <view class="car-name">{{item.car_name}}</view>
       <view class="car-price-row">
-        <text class="car-start">起拍 {{item.startText}}</text>
-        <text class="car-final">{{item.finalText}}</text>
+        <text class="car-start">限价 {{item.limitText}}</text>
       </view>
       <view class="car-tags" wx:if="{{item.fuelEmissionText || item.docsText || item.extraFeeText}}">
         <text class="tag" wx:if="{{item.fuelEmissionText}}">{{item.fuelEmissionText}}</text>

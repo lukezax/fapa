@@ -15,6 +15,7 @@ Page({
     verdict: '',
     ladderRows: [],
     topCards: [],
+    goodPicks: [],
     bandNote: ''
   },
 
@@ -115,6 +116,7 @@ Page({
           verdict: decorated.verdict,
           ladderRows: decorated.ladderRows,
           topCards: decorated.topCards,
+          goodPicks: decorated.goodPicks,
           bandNote: decorated.bandNote,
           loading: false
         });
@@ -131,6 +133,7 @@ Page({
       verdict: '',
       ladderRows: [],
       topCards: [],
+      goodPicks: [],
       bandNote: '',
       loading: false
     });
@@ -191,10 +194,23 @@ Page({
       }))
     }));
 
+    const goodPicks = (res.good_picks || []).map(g => ({
+      bracket: g.bracket,
+      cars: (g.cars || []).map(c => ({
+        car_name: c.car_name,
+        car_link: c.car_link,
+        limit_text: c.limit_price != null ? toWan(c.limit_price) : '—',
+        meta: [c.fuel_type, c.mileage_km ? (c.mileage_km / 10000).toFixed(1) + '万km' : '']
+          .filter(Boolean).join(' · '),
+        tags: c.tags || []
+      }))
+    }));
+
     return {
       verdict: (res.overall && res.overall.verdict) || '',
       ladderRows,
       topCards,
+      goodPicks,
       bandNote: '同类人 = 分位与你相近（±' + (res.band_half || 2.5) + '%）且排位不比你好的历史中拍者 '
         + ((res.deep_count || 0)) + ' 人；竞争力分 = 近 4 期「同类获单 ÷ 同期档位成交」的期均'
     };

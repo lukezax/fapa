@@ -71,7 +71,7 @@ function buildWhere(filters, zcid) {
 
   // min+max 双边区间
   const ranges = [
-    ['final_price_min', 'final_price_max', 'final_price'],
+    ['limit_price_min', 'limit_price_max', 'limit_price'],
     ['violation_min', 'violation_max', 'violation_count']
   ];
   for (const [minK, maxK, f] of ranges) {
