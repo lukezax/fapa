@@ -1,5 +1,5 @@
 // pages/rank/rank.js — 排名查询（tab 首页）· v4 中拍率阶梯
-// 输入摇号次数 + 注册时间 → 精确排名 + 各档中拍率 + 前三档本期车型推荐（按中拍率降序）
+// 输入摇号次数 + 注册时间 → 精确排名 + 各档中拍概率(双窗口) + 达标最便宜三档推荐
 const app = getApp();
 const { toWan } = require('../../utils/format');
 
@@ -169,21 +169,20 @@ Page({
     const ladder = res.ladder || [];
     const ladderRows = ladder.map(x => ({
       bracket: x.bracket,
-      score_text: (x.score_pct != null ? x.score_pct : 0).toFixed(2) + '%',
-      recent_orders: x.recent_orders || 0,
+      prob_text: x.prob_pct != null ? x.prob_pct.toFixed(2) + '%' : '—',
+      prob6_text: x.prob_pct6 != null ? x.prob_pct6.toFixed(2) + '%' : '—',
       supply: x.current_supply || 0,
       star: x.star || 0,
       pass: !!x.pass,
-      noSupply: x.fail === 'no_supply',
-      thin: x.pass && (x.recent_orders || 0) < 3
+      noSupply: x.fail === 'no_supply'
     }));
 
     const topCards = (res.top_recommendations || []).map(rec => ({
       star: rec.star,
       bracket: rec.bracket,
-      score_text: (rec.score_pct != null ? rec.score_pct : 0).toFixed(2) + '%',
-      recent_orders: rec.recent_orders || 0,
-      thin: rec.recent_orders < 3,
+      prob_text: rec.prob_pct != null ? rec.prob_pct.toFixed(2) + '%' : '—',
+      prob6_text: rec.prob_pct6 != null ? rec.prob_pct6.toFixed(2) + '%' : '—',
+      thin: rec.thin,
       cars: (rec.cars || []).map(c => ({
         car_name: c.car_name,
         car_link: c.car_link,
@@ -194,25 +193,23 @@ Page({
       }))
     }));
 
-    const goodPicks = (res.good_picks || []).map(g => ({
-      bracket: g.bracket,
-      cars: (g.cars || []).map(c => ({
-        car_name: c.car_name,
-        car_link: c.car_link,
-        limit_text: c.limit_price != null ? toWan(c.limit_price) : '—',
-        meta: [c.fuel_type, c.mileage_km ? (c.mileage_km / 10000).toFixed(1) + '万km' : '']
-          .filter(Boolean).join(' · '),
-        tags: c.tags || []
-      }))
-    }));
-
     return {
       verdict: (res.overall && res.overall.verdict) || '',
       ladderRows,
       topCards,
-      goodPicks,
-      bandNote: '同类人 = 分位与你相近（±' + (res.band_half || 2.5) + '%）且排位不比你好的历史中拍者 '
-        + ((res.deep_count || 0)) + ' 人；中拍率 = 近 6 期「同类获单 ÷ 同期档位成交」的期均'
+      goodPicks: (res.good_picks || []).map(g => ({
+        bracket: g.bracket,
+        cars: (g.cars || []).map(c => ({
+          car_name: c.car_name,
+          car_link: c.car_link,
+          limit_text: c.limit_price != null ? toWan(c.limit_price) : '—',
+          meta: [c.fuel_type, c.mileage_km ? (c.mileage_km / 10000).toFixed(1) + '万km' : '']
+            .filter(Boolean).join(' · '),
+          tags: c.tags || []
+        }))
+      })),
+      bandNote: '同类人 = 分位与你相近（±' + (res.band_half || 2.5) + '%）的历史中拍者 '
+        + ((res.band_sample || 0)) + ' 人；某档概率 = 同类在该档成交人数 ÷ 该档全部成交人数，再跨档位归一（两边窗口各归一：历年累计 / 最近 6 期）'
     };
   },
 

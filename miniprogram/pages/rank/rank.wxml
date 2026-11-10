@@ -61,7 +61,7 @@
       <view class="card" wx:for="{{topCards}}" wx:for-item="rec" wx:key="bracket">
         <view class="rank-bk-head">
           <text class="rank-bk-title">★{{rec.star}} {{rec.bracket}}</text>
-          <text class="tag rank-rec-strong">中拍率 {{rec.score_text}} · 近6期同类成交 {{rec.recent_orders}} 单</text>
+          <text class="tag rank-rec-strong">达标 {{rec.thin ? "(仅近6期口径)" : "(历年累计)"}} · 概率 {{rec.prob_text}} / 近6期 {{rec.prob6_text}}</text>
         </view>
         <view class="rank-bk-current">
           <view class="rank-bk-top5-title">本期在售 · 起拍价最低 {{rec.cars.length}} 台（出价方式：直接顶格）</view>
@@ -77,25 +77,25 @@
       </view>
     </block>
 
-    <!-- 中拍率阶梯（全部档位，纯价格维度，按价格升序） -->
+    <!-- 中拍概率阶梯（全部档位，纯价格维度，按价格升序） -->
     <view class="card">
-      <view class="card-title">各档位中拍率（历史口径）</view>
+      <view class="card-title">各档位中拍概率（按价格升序）</view>
       <view class="rank-ladder-row rank-ladder-head">
         <text class="rank-ladder-bk">档位</text>
-        <text class="rank-ladder-col">中拍率</text>
-        <text class="rank-ladder-col">近6期获单</text>
+        <text class="rank-ladder-col">概率·历年</text>
+        <text class="rank-ladder-col">概率·近6期</text>
         <text class="rank-ladder-col">本期在售</text>
         <text class="rank-ladder-last">判定</text>
       </view>
       <view class="rank-ladder-row {{item.pass ? '' : 'rank-ladder-dim'}}" wx:for="{{ladderRows}}" wx:key="bracket">
         <text class="rank-ladder-bk {{item.pass ? 'rank-ladder-bk-hot' : ''}}">{{item.bracket}}</text>
-        <text class="rank-ladder-col">{{item.score_text}}</text>
-        <text class="rank-ladder-col">{{item.recent_orders}}</text>
+        <text class="rank-ladder-col">{{item.prob_text}}</text>
+        <text class="rank-ladder-col">{{item.prob6_text}}</text>
         <text class="rank-ladder-col">{{item.supply}}</text>
         <text class="rank-ladder-last">
           <text wx:if="{{item.star}}" class="rank-ladder-star">★{{item.star}}</text>
           <text wx:elif="{{item.noSupply}}" class="rank-ladder-no">无在售</text>
-          <text wx:else class="rank-ladder-no">先例不足</text>
+          <text wx:else class="rank-ladder-no">未达标</text>
         </text>
       </view>
       <view class="empty" wx:if="{{!ladderRows.length}}">暂无档位数据</view>
@@ -125,8 +125,8 @@
     <view class="card rank-rules">
       <view class="card-title">数据口径</view>
       <view class="rank-rules-line">· 车辆按公布的最高限价顶格成交（历史溢价恒为 1.50），最终归属由排序决定：摇号次数多者优先，同次数比注册时间先后</view>
-      <view class="rank-rules-line">· 中拍率：与你分位相近、排位不比你好的人（同类），近 6 期在其档位总成交中占的份额期均，可近似理解为每期拍到的概率；只反映历史先例，不保证当期结果</view>
-      <view class="rank-rules-line">· 判定线：中拍率 ≥ 0.3% 或 近6期同类获单 ≥ 5；推荐按中拍率从高到低给出前三档，出价方式统一直接顶格</view>
+      <view class="rank-rules-line">· 概率：与你分位相近的人（同类）在某档的历史成交人数 ÷ 该档全部成交人数，再跨档位归一（历年累计 / 最近 6 期各归一一次，各自相加=100%）；只反映历史先例，不保证当期结果</view>
+      <view class="rank-rules-line">· 判定线：概率 ≥ 5%（任一窗口达标即可）；推荐 = 达标档位中最便宜的三个，少花钱优先，概率同时列出，出价方式统一直接顶格</view>
     </view>
   </block>
 
