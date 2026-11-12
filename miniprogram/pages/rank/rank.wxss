@@ -502,6 +502,11 @@
   font-size: 22rpx;
 }
 
+.rank-ladder-pass {
+  color: #e74c3c;
+  font-size: 22rpx;
+}
+
 .rank-ladder-dim {
   opacity: 0.55;
 }

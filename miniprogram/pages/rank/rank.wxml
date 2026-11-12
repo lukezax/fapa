@@ -64,7 +64,7 @@
           <text class="tag rank-rec-strong">达标 {{rec.thin ? "(仅近6期口径)" : "(历年累计)"}} · 概率 {{rec.prob_text}} / 近6期 {{rec.prob6_text}}</text>
         </view>
         <view class="rank-bk-current">
-          <view class="rank-bk-top5-title">本期在售 · 起拍价最低 {{rec.cars.length}} 台（出价方式：直接顶格）</view>
+          <view class="rank-bk-top5-title">本期在售 · 顶格价最低 {{rec.cars.length}} 台（出价方式：直接顶格）</view>
           <view class="rank-car-row" wx:for="{{rec.cars}}" wx:for-item="m" wx:key="car_link"
             bindtap="onCarTap" data-link="{{m.car_link}}">
             <text class="rank-car-name">{{m.car_name}}</text>
@@ -77,9 +77,9 @@
       </view>
     </block>
 
-    <!-- 中拍概率阶梯（全部档位，纯价格维度，按价格升序） -->
+    <!-- 中拍概率阶梯（全部档位，纯价格维度，按顶格价升序） -->
     <view class="card">
-      <view class="card-title">各档位中拍概率（按价格升序）</view>
+      <view class="card-title">各档位中拍概率（按顶格价升序）</view>
       <view class="rank-ladder-row rank-ladder-head">
         <text class="rank-ladder-bk">档位</text>
         <text class="rank-ladder-col">概率·历年</text>
@@ -95,6 +95,8 @@
         <text class="rank-ladder-last">
           <text wx:if="{{item.star}}" class="rank-ladder-star">★{{item.star}}</text>
           <text wx:elif="{{item.noSupply}}" class="rank-ladder-no">无在售</text>
+          <text wx:elif="{{item.thinSample}}" class="rank-ladder-no">样本不足</text>
+          <text wx:elif="{{item.pass}}" class="rank-ladder-pass">达标</text>
           <text wx:else class="rank-ladder-no">未达标</text>
         </text>
       </view>
@@ -124,9 +126,10 @@
     <!-- 数据口径说明 -->
     <view class="card rank-rules">
       <view class="card-title">数据口径</view>
+      <view class="rank-rules-line">· 价格档位按顶格价（最高限价）每 5 万元划分，与出价口径一致；不是按起拍价</view>
       <view class="rank-rules-line">· 车辆按公布的最高限价顶格成交（历史溢价恒为 1.50），最终归属由排序决定：摇号次数多者优先，同次数比注册时间先后</view>
       <view class="rank-rules-line">· 概率：与你分位相近的人（同类）在某档的历史成交人数 ÷ 该档全部成交人数，再跨档位归一（历年累计 / 最近 6 期各归一一次，各自相加=100%）；只反映历史先例，不保证当期结果</view>
-      <view class="rank-rules-line">· 判定线：概率 ≥ 5%（任一窗口达标即可）；推荐 = 达标档位中最便宜的三个，少花钱优先，概率同时列出，出价方式统一直接顶格</view>
+      <view class="rank-rules-line">· 判定线：概率 ≥ 5%（任一窗口达标即可），且该档历史成交 ≥ 20 条（不足则标「样本不足」不参与推荐）；推荐 = 达标档位中最便宜的三个，少花钱优先，概率同时列出，出价方式统一直接顶格</view>
     </view>
   </block>
 

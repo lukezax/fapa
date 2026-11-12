@@ -139,6 +139,7 @@ def build_winners(zcids, out_dir):
                 "brand": extract_brand(row.get("car_name", "")),
                 "start_price": to_num(row.get("start_price")),
                 "final_price": to_num(row.get("final_price")),
+                "limit_price": to_num(row.get("limit_price")),
                 "price_bracket": row.get("price_bracket", ""),
                 "winner_times": to_num(row.get("winner_times"), int),
                 "winner_reg_time": normalize_reg_time(row.get("winner_reg_time", "")),

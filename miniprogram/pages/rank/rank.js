@@ -172,9 +172,11 @@ Page({
       prob_text: x.prob_pct != null ? x.prob_pct.toFixed(2) + '%' : '—',
       prob6_text: x.prob_pct6 != null ? x.prob_pct6.toFixed(2) + '%' : '—',
       supply: x.current_supply || 0,
+      sample_n: x.sample_n || 0,
       star: x.star || 0,
       pass: !!x.pass,
-      noSupply: x.fail === 'no_supply'
+      noSupply: x.fail === 'no_supply',
+      thinSample: x.fail === 'thin_sample'
     }));
 
     const topCards = (res.top_recommendations || []).map(rec => ({
@@ -208,7 +210,7 @@ Page({
           tags: c.tags || []
         }))
       })),
-      bandNote: '同类人 = 分位与你相近（±' + (res.band_half || 2.5) + '%）的历史中拍者 '
+      bandNote: '档位按顶格价每 5 万元划分；同类人 = 分位与你相近（±' + (res.band_half || 2.5) + '%）的历史中拍者 '
         + ((res.band_sample || 0)) + ' 人；某档概率 = 同类在该档成交人数 ÷ 该档全部成交人数，再跨档位归一（两边窗口各归一：历年累计 / 最近 6 期）'
     };
   },

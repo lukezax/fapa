@@ -1,5 +1,5 @@
 // cloudfunctions/rank/index.js
-// 排名查询 v4：竞争力阶梯（纯价格维度）
+// 云函数 v4.4：竞争力阶梯（纯价格维度）
 //
 // 算法要点：
 // 1. compute_rank：在"最新期次"资格池内 count(times > 输入) + count(times == 输入 AND reg_time < 输入) + 1
@@ -7,8 +7,11 @@
 // 3. 可达深度 = 同类中 分位 ≥ 用户分位（排位不比你好者）——强者的成交推不出用户可达
 // 4. 档位概率 = 「分位带在该档成交人数 ÷ 该档全部成交人数」（分带份额），再跨档位归一（Σ=100%）
 //    双窗口：历年累计（全史）与最近 6 期
-// 5. 达标线 = 归一概率 ≥ 5%（任一窗口）；本期无在售 ⛔
+// 5. 达标线 = 归一概率 ≥ 5%（任一窗口）；本期无在售 ⛔；档位历史成交 <20 条不参与判定（样本不足）
 // 6. 前三推荐 = 达标档位按价格升序取前三（用户口径：尽量少花钱，概率同时给出）
+//
+// 档位口径：所有价格档位一律按「顶格价（最高限价）」每 5 万元划分，与小程序出价口径（直接顶格）一致。
+// 历史成交价恒为起拍价 ×1.5（5406/5407 条），故按起拍价分档会整体偏低约一档。
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
@@ -93,6 +96,15 @@ function bracketRange(bk) {
   return [parseInt(m[1], 10) * 10000, parseInt(m[2], 10) * 10000];
 }
 
+// 顶格价（最高限价）——所有档位划分与排序的唯一口径。
+// limit_price 缺失时按历史恒定的 1.5 倍起拍价兜底。
+function limitOf(c) {
+  const lp = parseFloat(c && c.limit_price);
+  if (!isNaN(lp) && lp > 0) return lp;
+  const sp = parseFloat(c && c.start_price);
+  return isNaN(sp) ? null : sp * 1.5;
+}
+
 // 精确排名：最新期次资格池内统计
 async function computeRank(times, regTime, latestZcid) {
   const userTimes = parseInt(times, 10);
@@ -160,22 +172,25 @@ async function calculate(event) {
   const carsRes = await db.collection('cars')
     .where({ zcid: CURRENT_ZCID }).limit(1000).get();
   const currentCars = carsRes.data || [];
+
+  // 竞争力阶梯（纯价格档位，按顶格价升序）
+  const bkSet = allBrackets(winnersPct, currentCars);
+  const bks = Object.keys(bkSet).sort((a, b) => bracketSortKey(a) - bracketSortKey(b));
+  const bkRanges = bks.map(bk => ({ bk, range: bracketRange(bk) })).filter(x => x.range);
+
+  // 本期在售车辆按顶格价入档（每台只进一个档）
   const carsByBracket = {};
   for (const c of currentCars) {
-    const sp = parseFloat(c.start_price);
-    if (isNaN(sp)) continue;
-    for (const bk of Object.keys(allBrackets(winnersPct, currentCars))) {
-      const range = bracketRange(bk);
-      if (range && sp >= range[0] && sp < range[1]) {
+    const lp = limitOf(c);
+    if (lp == null) continue;
+    for (const { bk, range } of bkRanges) {
+      if (lp >= range[0] && lp < range[1]) {
         if (!carsByBracket[bk]) carsByBracket[bk] = [];
-        carsByBracket[bk].push({ ...c, _sp: sp });
+        carsByBracket[bk].push({ ...c, _lp: lp });
+        break;
       }
     }
   }
-
-  // 竞争力阶梯（纯价格档位，按价格升序）
-  const bkSet = allBrackets(winnersPct, currentCars);
-  const bks = Object.keys(bkSet).sort((a, b) => bracketSortKey(a) - bracketSortKey(b));
 
   // 双窗口统计：分带份额 = 带内成交/档位总成交；归一概率 = 份额/各档份额之和
   const totA = {}, totB = {}, cntA = {}, cntB = {};
@@ -203,22 +218,27 @@ async function calculate(event) {
   const winB = windowStats(cntB, totB);   // 最近 6 期
 
   const r2 = v => v == null ? null : Math.round(v * 100) / 100;
-  const PASS_PROB = 5;   // 归一概率达标线（%），九档平均约 11%，5% ≈ 半水位
+  const PASS_PROB = 5;      // 归一概率达标线（%），14 档平均约 7%，5% ≈ 0.7 倍均分
+  const MIN_SAMPLE = 20;    // 档位历史成交样本下限，低于此不参与达标判定（避免小样本概率虚高）
 
   const ladder = bks.map(bk => {
     const supply = (carsByBracket[bk] || []).length;
+    const sampleN = totA[bk] || 0;
     const probA = winA.prob[bk] == null ? 0 : winA.prob[bk];
     const probB = winB.prob[bk] == null ? 0 : winB.prob[bk];
-    const pass = supply > 0 && (probA >= PASS_PROB || probB >= PASS_PROB);
+    const thinSample = sampleN < MIN_SAMPLE;
+    const pass = supply > 0 && !thinSample && (probA >= PASS_PROB || probB >= PASS_PROB);
     return {
       bracket: bk,
       prob_pct: r2(winA.prob[bk]),      // 归一概率 · 历年累计（%）
       prob_pct6: r2(winB.prob[bk]),     // 归一概率 · 最近 6 期（%）
       share_pct: r2(winA.share[bk] != null ? winA.share[bk] * 100 : null),   // 分带份额原始值（%）便于口径展示
       share_pct6: r2(winB.share[bk] != null ? winB.share[bk] * 100 : null),
+      sample_n: sampleN,                // 该档历史成交总数
       current_supply: supply,
       pass,
-      fail: supply === 0 ? 'no_supply' : (!pass ? 'below_line' : '')
+      thin_sample: thinSample,
+      fail: supply === 0 ? 'no_supply' : (thinSample ? 'thin_sample' : (!pass ? 'below_line' : ''))
     };
   });
 
@@ -236,7 +256,7 @@ async function calculate(event) {
     current_supply: x.current_supply,
     thin: x.prob_pct != null && x.prob_pct < PASS_PROB,   // 仅近6期口径达标
     cars: (carsByBracket[x.bracket] || [])
-      .sort((a, b) => a._sp - b._sp)
+      .sort((a, b) => a._lp - b._lp)
       .slice(0, 3)
       .map(c => {
         const lp = c.limit_price != null && c.limit_price !== '' ? parseFloat(c.limit_price) : null;
@@ -265,16 +285,16 @@ async function calculate(event) {
             car_name: c.car_name,
             car_link: c.car_link,
             start_price: c.start_price,
-            start_num: c._sp,
+            limit_num: c._lp,
             limit_price: lp != null && !isNaN(lp) ? lp : null,
             mileage_km: c.mileage_km,
             fuel_type: c.fuel_type
           };
         })
         .filter(x => x.score.some(v => v === 1))
-        .sort((a, b) => cmpGoodScore(a.score, b.score) || a.start_num - b.start_num)
+        .sort((a, b) => cmpGoodScore(a.score, b.score) || a.limit_num - b.limit_num)
         .slice(0, 2)
-        .map(({ score, start_num, ...rest }) => rest)
+        .map(({ score, limit_num, ...rest }) => rest)
     }))
     .filter(x => x.cars.length > 0);
 
@@ -289,7 +309,7 @@ async function calculate(event) {
   }
 
   return {
-    ver: 'v4.3.0',
+    ver: 'v4.4.0',
     rank,
     total,
     user_pct: Math.round(userPct * 10) / 10,
@@ -313,9 +333,9 @@ function allBrackets(winnersPct, currentCars) {
   const s = {};
   winnersPct.forEach(w => { s[w.bracket] = 1; });
   currentCars.forEach(c => {
-    const sp = parseFloat(c.start_price);
-    if (isNaN(sp)) return;
-    const lo = Math.floor(sp / 50000) * 5;
+    const lp = limitOf(c);
+    if (lp == null) return;
+    const lo = Math.floor(lp / 50000) * 5;
     s[lo + '-' + (lo + 5) + '万'] = 1;
   });
   return s;

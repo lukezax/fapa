@@ -26,10 +26,14 @@ def parse_reg_time(rt):
     return date_part, time_clean
 
 
-def price_bracket(start_price_str):
-    """将起拍价映射到 5万元 档位"""
+def price_bracket(limit_price_str):
+    """将顶格价（最高限价／实际成交价）映射到 5 万元档位。
+
+    口径说明：档位一律按顶格价划分，与小程序出价口径（直接顶格）一致。
+    历史数据显示成交价恒为起拍价 ×1.5（5406/5407 条），故起拍价口径会整体偏低约一档。
+    """
     try:
-        price = float(start_price_str)
+        price = float(limit_price_str)
     except (ValueError, TypeError):
         return "未知"
     bracket_start = int(price // 50000) * 50000
@@ -106,7 +110,15 @@ def main():
         for w in group:
             prefix = w["prefix"]
             start_price = w.get("start_price", "0")
-            bracket = price_bracket(start_price)
+            # 顶格价 = 实际成交价（历史恒为起拍价 ×1.5）；缺失时按 1.5 兜底
+            final_price = (w.get("final_price") or "").strip()
+            limit_price = final_price
+            if not limit_price:
+                try:
+                    limit_price = f"{float(start_price) * 1.5:.2f}"
+                except (ValueError, TypeError):
+                    limit_price = ""
+            bracket = price_bracket(limit_price)
 
             if prefix in idx:
                 rank, winner_times, winner_reg_time = idx[prefix]
@@ -117,6 +129,7 @@ def main():
                     "car_link": w.get("car_link", ""),
                     "start_price": start_price,
                     "final_price": w.get("final_price", ""),
+                    "limit_price": limit_price,
                     "price_bracket": bracket,
                     "winner_times": winner_times,
                     "winner_reg_time": winner_reg_time,
@@ -130,7 +143,7 @@ def main():
     # 写入输出
     fieldnames = [
         "prefix", "result_zcid", "car_name", "car_link",
-        "start_price", "final_price", "price_bracket",
+        "start_price", "final_price", "limit_price", "price_bracket",
         "winner_times", "winner_reg_time", "winner_rank", "total_bidders",
     ]
     with open(OUTPUT_PATH, "w", newline="", encoding="utf-8") as f:
