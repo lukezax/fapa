@@ -2,6 +2,7 @@
 // 输入摇号次数 + 注册时间 → 精确排名 + 各档中拍概率(双窗口) + 达标最便宜三档推荐
 const app = getApp();
 const { toWan } = require('../../utils/format');
+const { enableShareMenu, isSinglePage, guideTimelineShare, singlePageTip } = require('../../utils/share');
 
 Page({
   data: {
@@ -16,11 +17,17 @@ Page({
     ladderRows: [],
     topCards: [],
     goodPicks: [],
-    bandNote: ''
+    bandNote: '',
+    singlePage: false,  // 朋友圈单页模式：无 tabBar、不可跳转
+    shareCard: null,    // 单页模式兜底摘要（分享链接自带，不依赖云调用）
+    queryFailed: false
   },
 
   // 从 mine 页历史点击进入：options.times / options.reg_time（已 encodeURIComponent）
   onLoad(options) {
+    this.setData({ singlePage: isSinglePage() });
+    enableShareMenu();
+    this.parseShareCard(options);
     if (options && options.times && options.reg_time) {
       const times = decodeURIComponent(options.times);
       const regTimeFull = decodeURIComponent(options.reg_time);
@@ -38,6 +45,7 @@ Page({
 
   // 数据分析页「查看完整推荐」跳转：消费全局待查询参数
   onShow() {
+    enableShareMenu();
     const q = getApp().globalData.pendingRankQuery;
     if (!q || !q.times || !q.reg_time) return;
     getApp().globalData.pendingRankQuery = null;
@@ -94,6 +102,23 @@ Page({
     this.doQuery(String(t), regTimeFull);
   },
 
+  // 朋友圈单页模式没有登录态，云开发默认不可用。
+  // 因此分享链接自带一份摘要（r/t/u/b/p），单页模式下即使查不了也能看到结果。
+  parseShareCard(options) {
+    if (!options || !options.r) return;
+    const dec = v => { try { return decodeURIComponent(v); } catch (e) { return v; } };
+    const brackets = dec(options.b || '').split(',').filter(Boolean);
+    const probs = dec(options.p || '').split(',').filter(Boolean);
+    this.setData({
+      shareCard: {
+        rank: options.r,
+        total: options.t || '',
+        pct: options.u || '',
+        items: brackets.map((bk, i) => ({ bracket: bk, prob: probs[i] || '' }))
+      }
+    });
+  },
+
   // ---------- 查询 ----------
   doQuery(times, regTimeFull) {
     this.setData({ loading: true });
@@ -122,8 +147,11 @@ Page({
         });
       })
       .catch(err => {
-        this.setData({ loading: false });
-        wx.showToast({ title: (err && err.message) || '查询失败', icon: 'none' });
+        this.setData({ loading: false, queryFailed: true });
+        // 单页模式无登录态，云开发不可用属预期，静默走摘要兜底
+        if (!this.data.singlePage) {
+          wx.showToast({ title: (err && err.message) || '查询失败', icon: 'none' });
+        }
       });
   },
 
@@ -140,6 +168,7 @@ Page({
   },
 
   onCarTap(e) {
+    if (this.data.singlePage) { singlePageTip(); return; }
     const link = e.currentTarget.dataset.link;
     if (!link) return;
     wx.navigateTo({
@@ -162,6 +191,36 @@ Page({
     const path = '/pages/rank/rank?times=' + encodeURIComponent(this._lastQuery.times)
       + '&reg_time=' + encodeURIComponent(this._lastQuery.regTimeFull);
     return { title, path };
+  },
+
+  // 朋友圈分享：单页模式直接展示该页，故把查询参数带在 query 里
+  // 注意：朋友圈只能用 query（不带 ?），不能用 path
+  onShareTimeline() {
+    if (!this.data.result || !this._lastQuery) {
+      return {
+        title: '京慧车讯 · 15 期成交数据，帮你选本期好车',
+        query: ''
+      };
+    }
+    const r = this.data.result;
+    const first = (this.data.topCards && this.data.topCards[0]) || null;
+    const title = '第' + r.rank + '名/共' + r.total + '人（前' + r.user_pct + '%）'
+      + (first ? '，首推「' + first.bracket + '」' : '');
+    const brackets = (this.data.topCards || []).map(c => c.bracket);
+    const probs = (this.data.topCards || []).map(c => c.prob_text);
+    return {
+      title,
+      query: 'times=' + encodeURIComponent(this._lastQuery.times)
+        + '&reg_time=' + encodeURIComponent(this._lastQuery.regTimeFull)
+        + '&r=' + r.rank + '&t=' + r.total + '&u=' + r.user_pct
+        + '&b=' + encodeURIComponent(brackets.join(','))
+        + '&p=' + encodeURIComponent(probs.join(','))
+    };
+  },
+
+  // 页内入口：代码无法直接触发朋友圈分享，只唤起菜单并提示
+  onTimelineTap() {
+    guideTimelineShare();
   },
 
   // ---------- 数据加工 ----------

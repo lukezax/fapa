@@ -409,9 +409,18 @@
   margin-right: 8rpx;
 }
 /* 结果分享按钮 */
+.rank-share-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20rpx;
+  margin-top: 24rpx;
+}
+
 .rank-share-btn {
-  margin: 24rpx auto 0;
-  width: 320rpx;
+  margin: 0;
+  width: 260rpx;
+  text-align: center;
   background: #fff;
   color: #57606f;
   font-size: 26rpx;
@@ -422,6 +431,45 @@
 
 .rank-share-btn::after {
   border: none;
+}
+
+.rank-share-timeline {
+  background: #f0f2f5;
+  color: #57606f;
+  border-color: #d0d3da;
+}
+
+.rank-sc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid #f0f2f5;
+}
+
+.rank-sc-bk {
+  font-size: 30rpx;
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.rank-sc-prob {
+  font-size: 26rpx;
+  color: #57606f;
+}
+
+.rank-sc-note {
+  margin-top: 20rpx;
+  font-size: 22rpx;
+  color: #a0a0b0;
+  line-height: 1.6;
+}
+
+.rank-single-tip {
+  margin-top: 18rpx;
+  font-size: 22rpx;
+  color: #a0a0b0;
+  text-align: center;
 }
 
 /* ---------- 综合建议条 ---------- */

@@ -5,7 +5,11 @@
     <view class="intro-title">京慧车讯</view>
     <view class="intro-sub">历史成交数据 · 看清你的竞争位置 · 推荐本期好车</view>
     <view class="btn-primary" bindtap="goRank">立即查询我的排名</view>
-    <button class="intro-share-btn" open-type="share">分享给朋友</button>
+    <view class="intro-share-row">
+      <button class="intro-share-btn" open-type="share">分享给朋友</button>
+      <view class="intro-share-btn" bindtap="onTimelineTap">分享到朋友圈</view>
+    </view>
+    <view class="intro-single-tip" wx:if="{{singlePage}}">朋友圈单页模式仅可查看，请在小程序中打开使用</view>
   </view>
 
   <view class="card">

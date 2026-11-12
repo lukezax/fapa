@@ -1,8 +1,24 @@
 <view class="container">
-  <!-- car_link 缺失 -->
-  <view wx:if="{{!car}}" class="empty">车辆不存在或已下架</view>
+  <!-- 单页模式兜底：无登录态查不到详情，用分享链接自带信息展示 -->
+  <block wx:if="{{!car && shareCar}}">
+    <view class="card detail-head">
+      <view class="car-name">{{shareCar.name}}</view>
+      <view class="detail-tl-tip">单页模式仅显示摘要，完整车况在完整版中查看</view>
+    </view>
+    <view class="card price-card" wx:if="{{shareCar.price}}">
+      <view class="price-row">
+        <view class="price-item">
+          <view class="price-label">最高限价</view>
+          <view class="price-value price-final">{{shareCar.price}}</view>
+        </view>
+      </view>
+    </view>
+  </block>
 
-  <block wx:else>
+  <!-- car_link 缺失 -->
+  <view wx:if="{{!car && !shareCar}}" class="empty">车辆不存在或已下架</view>
+
+  <block wx:elif="{{car}}">
     <!-- 顶部：车名 + tags + 收藏 -->
     <view class="card detail-head">
       <view class="head-row">
@@ -31,6 +47,12 @@
           <view class="price-value price-final">{{display.limitText}}</view>
         </view>
       </view>
+    </view>
+
+    <!-- 朋友圈入口（代码无法直接触发，点击后引导点右上角 ···） -->
+    <view class="detail-tl-row">
+      <view class="detail-tl-btn" bindtap="onTimelineTap">分享到朋友圈</view>
+      <text class="detail-tl-tip" wx:if="{{singlePage}}">朋友圈单页模式仅可查看</text>
     </view>
 
     <!-- 成交信息（winners 联表，历史期次车的主要信息来源） -->

@@ -2,16 +2,26 @@
 const { toWan, toWanWithComma, formatViolation, formatPeriod, formatRegTime } = require('../../utils/format');
 const { AD_UNITS } = require('../../utils/ad');
 const { CURRENT_PERIOD } = require('../../utils/constants');
+const { enableShareMenu, isSinglePage, guideTimelineShare, singlePageTip } = require('../../utils/share');
 
 Page({
   data: {
     car: null,
     isFavorite: false,
+    singlePage: false,
+    shareCar: null,   // 单页模式兜底（分享链接自带车名/限价）
     display: null,
     bannerUnit: AD_UNITS.bannerDetail
   },
 
   onLoad(options) {
+    this.setData({ singlePage: isSinglePage() });
+    enableShareMenu();
+    // 单页模式无登录态，云开发默认不可用：分享链接自带车名/限价做兜底
+    if (options && options.n) {
+      const dec = v => { try { return decodeURIComponent(v); } catch (e) { return v; } };
+      this.setData({ shareCar: { name: dec(options.n), price: dec(options.p || '') } });
+    }
     const carLink = options.car_link ? decodeURIComponent(options.car_link) : '';
     if (!carLink) {
       this.setData({ car: null });
@@ -97,8 +107,13 @@ Page({
     return display;
   },
 
+  onShow() {
+    enableShareMenu();
+  },
+
   // 收藏：乐观更新，失败回滚
   onFavoriteTap() {
+    if (this.data.singlePage) { singlePageTip(); return; }
     const app = getApp();
     const next = !this.data.isFavorite;
     const method = next ? 'add' : 'remove';
@@ -129,5 +144,25 @@ Page({
       title: name + (price ? ' 最高限价 ' + price : ''),
       path: '/pages/car-detail/car-detail?car_link=' + encodeURIComponent(this.carLink)
     };
+  },
+
+  // 朋友圈分享：单页模式直达本车；只能用 query，不能用 path
+  onShareTimeline() {
+    const car = this.data.car;
+    if (!car) {
+      return { title: '京慧车讯 · 在历史成交数据中找到适合你的车', query: '' };
+    }
+    const name = car.car_name.length > 24 ? car.car_name.slice(0, 24) + '…' : car.car_name;
+    const price = car.limit_price ? (car.limit_price / 10000).toFixed(1) + '万' : '';
+    return {
+      title: name + (price ? ' 最高限价 ' + price : ''),
+      query: 'car_link=' + encodeURIComponent(this.carLink)
+        + '&n=' + encodeURIComponent(name)
+        + '&p=' + encodeURIComponent(price)
+    };
+  },
+
+  onTimelineTap() {
+    guideTimelineShare();
   }
 });

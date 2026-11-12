@@ -1,8 +1,27 @@
 <!-- pages/rank/rank.wxml — 排名查询 · v4 中拍率阶梯 -->
 <view class="container">
 
+  <!-- 单页模式兜底摘要（分享链接自带，无云调用也能看） -->
+  <block wx:if="{{shareCard && !result}}">
+    <view class="card rank-rank-card">
+      <view class="rank-rank-main">
+        <text class="rank-rank-num">{{shareCard.rank}}</text>
+        <text class="rank-rank-suffix">名</text>
+      </view>
+      <view class="rank-rank-sub">共 {{shareCard.total}} 人参与 · 前 {{shareCard.pct}}%</view>
+    </view>
+    <view class="card">
+      <view class="card-title">达标档位（摘要）</view>
+      <view class="rank-sc-row" wx:for="{{shareCard.items}}" wx:for-item="it" wx:key="bracket">
+        <text class="rank-sc-bk">★{{index + 1}} {{it.bracket}}</text>
+        <text class="rank-sc-prob">{{it.prob}}</text>
+      </view>
+      <view class="rank-sc-note">单页模式仅显示摘要，完整档位表与在售车辆在完整版中查看</view>
+    </view>
+  </block>
+
   <!-- 输入区（查询成功后隐藏，可点"重新查询"返回） -->
-  <view class="card" wx:if="{{!result}}">
+  <view class="card" wx:if="{{!result && !shareCard}}">
     <view class="card-title">排名查询</view>
 
     <view class="rank-field">
@@ -43,7 +62,11 @@
         <text class="rank-rank-suffix">名</text>
       </view>
       <view class="rank-rank-sub">共 {{result.total}} 人参与 · 前 {{result.user_pct}}%</view>
-      <button class="rank-share-btn" open-type="share">分享这个结果</button>
+      <view class="rank-share-row">
+        <button class="rank-share-btn" open-type="share">分享给朋友</button>
+        <view class="rank-share-btn rank-share-timeline" bindtap="onTimelineTap">分享到朋友圈</view>
+      </view>
+      <view class="rank-single-tip" wx:if="{{singlePage}}">朋友圈单页模式仅可查看，点车需在小程序中打开</view>
     </view>
 
     <!-- 综合判词 -->
