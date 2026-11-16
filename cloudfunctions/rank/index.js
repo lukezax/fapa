@@ -64,25 +64,77 @@ function normalizeRegTime(rt) {
   return String(rt || '').replace(/:\s/g, ':').replace(/\.\s/g, '.').trim();
 }
 
-// 分页拉取集合全部数据
-async function fetchAll(collectionName, max = 1000) {
+// 分页拉取集合全部数据（带字段投影，减小载荷）
+async function fetchAll(collectionName, max = 1000, field = null) {
   const all = [];
-  const countRes = await db.collection(collectionName).count();
+  let q = db.collection(collectionName);
+  if (field) q = q.field(field);
+  const countRes = await q.count();
   const total = countRes.total;
   const pages = Math.ceil(total / max);
   for (let i = 0; i < pages; i++) {
-    const res = await db.collection(collectionName)
-      .skip(i * max).limit(max).get();
+    let pageQ = db.collection(collectionName);
+    if (field) pageQ = pageQ.field(field);
+    const res = await pageQ.skip(i * max).limit(max).get();
     all.push(...res.data);
   }
   return all;
 }
 
+// 中拍者画像（只取计算所需 4 个字段），模块级缓存 10 分钟。
+// 本期与历史中拍数据只在导库时变化，缓存不会导致长期不一致。
+const WINNER_FIELDS = {
+  price_bracket: true, result_zcid: true, winner_rank: true, total_bidders: true
+};
+let _winnerCache = { key: '', ts: 0, data: null };
+
+async function getWinnersPct(meta) {
+  const key = meta ? `${meta.winners_count}-${meta.winners_latest_zcid}` : '';
+  const now = Date.now();
+  if (_winnerCache.data && _winnerCache.key === key && now - _winnerCache.ts < META_TTL) {
+    return _winnerCache.data;
+  }
+  const winners = await fetchAll('winners', 1000, WINNER_FIELDS).catch(() => []);
+  const data = winners
+    .map(w => {
+      const rk = parseInt(w.winner_rank, 10);
+      const tb = parseInt(w.total_bidders, 10);
+      return isNaN(rk) || isNaN(tb) || tb <= 0 ? null : {
+        bracket: w.price_bracket,
+        zcid: String(w.result_zcid),
+        pct: rk / tb * 100
+      };
+    })
+    .filter(Boolean);
+  _winnerCache = { key, ts: now, data };
+  return data;
+}
+
 // 资格池最新期（排名基准：pool_all 未发布新期前不随 cars 变）
+// 优先读 meta 文档（1 次轻查询，模块级缓存 10 分钟），失败时回退 max(zcid)。
+let _metaCache = { ts: 0, data: null };
+const META_TTL = 10 * 60 * 1000;
+
+async function getMeta() {
+  const now = Date.now();
+  if (_metaCache.data && now - _metaCache.ts < META_TTL) return _metaCache.data;
+  let data = null;
+  try {
+    const res = await db.collection('meta').doc('current').get();
+    data = res.data || null;
+  } catch (e) {
+    data = null;
+  }
+  _metaCache = { ts: now, data };
+  return data;
+}
+
 async function getLatestPoolZcid() {
+  const meta = await getMeta();
+  if (meta && meta.pool_zcid) return meta.pool_zcid;
   const res = await db.collection('pool_all')
     .orderBy('zcid', 'desc').limit(1).get();
-  return res.data.length ? res.data[0].zcid : 2400;
+  return res.data.length ? res.data[0].zcid : 2464;
 }
 
 // 本期在售期次（202611 期）
@@ -105,19 +157,18 @@ function limitOf(c) {
   return isNaN(sp) ? null : sp * 1.5;
 }
 
-// 精确排名：最新期次资格池内统计
+// 精确排名：最新期次资格池内统计（3 个 count 并发）
 async function computeRank(times, regTime, latestZcid) {
   const userTimes = parseInt(times, 10);
   const userKey = normalizeRegTime(regTime);
 
-  const gt = await db.collection('pool_all')
-    .where({ zcid: latestZcid, times: _.gt(userTimes) })
-    .count();
-  const eq = await db.collection('pool_all')
-    .where({ zcid: latestZcid, times: userTimes, reg_time: _.lt(userKey) })
-    .count();
+  const [gt, eq, tot] = await Promise.all([
+    db.collection('pool_all').where({ zcid: latestZcid, times: _.gt(userTimes) }).count(),
+    db.collection('pool_all').where({ zcid: latestZcid, times: userTimes, reg_time: _.lt(userKey) }).count(),
+    db.collection('pool_all').where({ zcid: latestZcid }).count()
+  ]);
 
-  return gt.total + eq.total + 1;
+  return { rank: gt.total + eq.total + 1, total: tot.total };
 }
 
 async function calculate(event) {
@@ -127,32 +178,19 @@ async function calculate(event) {
     return { error: { code: 400, msg: '请填写次数和注册时间' } };
   }
 
-  const latestZcid = await getLatestPoolZcid();
+  const meta = await getMeta();
+  const latestZcid = (meta && meta.pool_zcid) || await getLatestPoolZcid();
 
-  // 资格池总量（最新期）
-  const totalRes = await db.collection('pool_all')
-    .where({ zcid: latestZcid }).count();
-  const total = totalRes.total;
+  // 排名与中拍画像并行：排名 3 个 count 并发，中拍画像命中模块缓存
+  const [rankInfo, winnersPct] = await Promise.all([
+    computeRank(times, reg_time, latestZcid),
+    getWinnersPct(meta)
+  ]);
+  const { rank, total } = rankInfo;
   if (total === 0) {
     return { error: { code: 500, msg: '资格池为空，请先导入数据' } };
   }
-
-  const rank = await computeRank(times, reg_time, latestZcid);
   const userPct = rank / total * 100;
-
-  // 加载全部中拍者，计算历史分位
-  const winners = await fetchAll('winners').catch(() => []);
-  const winnersPct = winners
-    .map(w => {
-      const rk = parseInt(w.winner_rank, 10);
-      const tb = parseInt(w.total_bidders, 10);
-      return isNaN(rk) || isNaN(tb) || tb <= 0 ? null : {
-        bracket: w.price_bracket,
-        zcid: String(w.result_zcid),
-        pct: rk / tb * 100
-      };
-    })
-    .filter(Boolean);
 
   // 同类分位带：±2.5 分位起步，带内中拍样本 <30 自动翻倍，上限 ±10 分位
   let half = 2.5;
@@ -309,7 +347,7 @@ async function calculate(event) {
   }
 
   return {
-    ver: 'v4.4.0',
+    ver: 'v4.5.0',
     rank,
     total,
     user_pct: Math.round(userPct * 10) / 10,
@@ -324,7 +362,18 @@ async function calculate(event) {
     overall: { has_pass: topRecommendations.length > 0, verdict },
     latest_zcid: latestZcid,
     current_zcid: CURRENT_ZCID,
-    current_period: CURRENT_PERIOD
+    current_period: CURRENT_PERIOD,
+    // 本期数据版本（前端「本期数据已更新」标识）
+    data_meta: meta ? {
+      period: meta.period,
+      pool_zcid: meta.pool_zcid,
+      pool_count: meta.pool_count,
+      pool_updated_at: meta.pool_updated_at,
+      cars_count: meta.cars_count,
+      cars_updated_at: meta.cars_updated_at,
+      winners_count: meta.winners_count,
+      winners_periods: meta.winners_periods
+    } : null
   };
 }
 

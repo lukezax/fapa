@@ -18,6 +18,7 @@ Page({
     mileageDist: [],
     condition: null,
     history: null,
+    dataMeta: null,     // 本期数据版本（「本期数据已更新」标识）
     // 图表 ec 对象：数据到达后再 setData，配合 wx:if 挂载 ec-canvas 触发 onInit
     priceEc: null
   },
@@ -42,6 +43,7 @@ Page({
           mileageDist: this.withPercent(res.mileage_dist || [], 'count'),
           condition: res.condition || null,
           history: res.history || null,
+          dataMeta: this.formatMeta(res.data_meta),
           priceEc: priceDist.length ? { onInit: this.initPriceChart.bind(this) } : null
         });
       })
@@ -86,6 +88,17 @@ Page({
       })
       .catch(() => {})
       .then(() => wx.switchTab({ url: '/pages/rank/rank' }));
+  },
+
+  // 本期数据版本 → 展示文案（11504 → 11,504；2026-11-16 → 11-16）
+  formatMeta(m) {
+    if (!m || !m.pool_count) return null;
+    return {
+      period: m.period || '',
+      countText: String(m.pool_count).replace(/\B(?=(\d{3})+(?!\d))/g, ','),
+      updatedText: String(m.pool_updated_at || '').slice(5) || '',
+      carsUpdatedText: String(m.cars_updated_at || '').slice(5) || ''
+    };
   },
 
   // 计算每项占最大值的百分比（用于条形宽度）

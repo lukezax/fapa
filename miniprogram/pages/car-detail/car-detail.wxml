@@ -15,10 +15,28 @@
     </view>
   </block>
 
-  <!-- car_link 缺失 -->
-  <view wx:if="{{!car && !shareCar}}" class="empty">车辆不存在或已下架</view>
+  <!-- 请求明确失败 -->
+  <view wx:if="{{notFound && !car && !shareCar}}" class="empty">车辆不存在或已下架</view>
 
-  <block wx:elif="{{car}}">
+  <!-- 加载骨架（请求中 / 无缓存首帧） -->
+  <block wx:if="{{loading && !car && !shareCar && !notFound}}">
+    <view class="card detail-head">
+      <view class="sk-line sk-w70"></view>
+      <view class="sk-line sk-w40"></view>
+    </view>
+    <view class="card sk-card">
+      <view class="sk-line sk-w30"></view>
+      <view class="sk-line sk-w50"></view>
+    </view>
+    <view class="card sk-card">
+      <view class="sk-line sk-w40"></view>
+      <view class="sk-line sk-w85"></view>
+      <view class="sk-line sk-w85"></view>
+      <view class="sk-line sk-w60"></view>
+    </view>
+  </block>
+
+  <block wx:if="{{car}}">
     <!-- 顶部：车名 + tags + 收藏 -->
     <view class="card detail-head">
       <view class="head-row">

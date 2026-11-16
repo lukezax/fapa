@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-11-12T18:22:39",
+  "generated_at": "2026-11-16T10:48:44",
   "current_zcid": 2464,
-  "pool_zcid": 2400,
+  "pool_zcid": 2464,
   "winner_zcids": [
     331,
     378,
@@ -20,8 +20,22 @@
     2400
   ],
   "counts": {
-    "pool_all": 12972,
+    "pool_all": 11504,
     "winners": 5407,
     "cars": 506
+  },
+  "meta": {
+    "_id": "current",
+    "period": "202611期",
+    "pool_zcid": 2464,
+    "pool_count": 11504,
+    "pool_updated_at": "2026-11-16",
+    "cars_zcid": 2464,
+    "cars_count": 506,
+    "cars_updated_at": "2026-11-06",
+    "winners_count": 5407,
+    "winners_periods": 15,
+    "winners_latest_zcid": 2400,
+    "generated_at": "2026-11-16T10:48:44"
   }
 }

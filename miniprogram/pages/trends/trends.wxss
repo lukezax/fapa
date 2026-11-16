@@ -185,3 +185,57 @@
 .trend-action-btn:active {
   opacity: 0.85;
 }
+
+/* ---------- 本期数据更新标识 ---------- */
+.trend-fresh {
+  display: flex;
+  align-items: center;
+  margin: 0 0 20rpx;
+  padding: 16rpx 24rpx;
+  background: #eaf7ee;
+  border: 1rpx solid #c9e9d4;
+  border-radius: 12rpx;
+}
+
+.trend-fresh-dot {
+  flex-shrink: 0;
+  width: 12rpx;
+  height: 12rpx;
+  margin-right: 14rpx;
+  background: #27ae60;
+  border-radius: 50%;
+  animation: trend-fresh-pulse 1.8s ease-out 3;
+}
+
+@keyframes trend-fresh-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.5); }
+  70% { box-shadow: 0 0 0 12rpx rgba(39, 174, 96, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0); }
+}
+
+.trend-fresh-text {
+  font-size: 23rpx;
+  color: #1e8449;
+  line-height: 1.5;
+}
+
+/* ---------- 骨架屏 ---------- */
+.sk-card { padding: 28rpx 24rpx; }
+.sk-line {
+  height: 26rpx;
+  margin-bottom: 20rpx;
+  background: #eef0f4;
+  border-radius: 8rpx;
+}
+.sk-line:last-child { margin-bottom: 0; }
+.sk-w40 { width: 40%; }
+.sk-w50 { width: 50%; }
+.sk-w60 { width: 60%; }
+.sk-w70 { width: 70%; }
+.sk-w80 { width: 80%; }
+.sk-w90 { width: 90%; }
+.sk-block {
+  height: 280rpx;
+  background: #f2f4f7;
+  border-radius: 12rpx;
+}

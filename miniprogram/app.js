@@ -4,7 +4,8 @@ App({
     env: 'cloud1-d6g6tx36h29179055', // TODO: 替换为你的云开发环境 ID
     latestZcid: 2464,        // 本期在售（202611期）
     currentPeriod: '202611期',
-    openid: null
+    openid: null,
+    carCache: {}             // 列表页点击时写入，详情页首帧直出
   },
 
   onLaunch() {

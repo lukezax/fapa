@@ -228,7 +228,15 @@
   </view>
 
   <!-- 列表 -->
-  <view wx:if="{{loading}}" class="loading">加载中...</view>
+  <!-- 骨架屏：避免首屏空白 -->
+  <block wx:if="{{loading}}">
+    <view class="card sk-card" wx:for="{{[1,2,3]}}" wx:for-item="sk" wx:key="*this">
+      <view class="sk-line sk-w30"></view>
+      <view class="sk-line sk-w85"></view>
+      <view class="sk-line sk-w50"></view>
+      <view class="sk-line sk-w70"></view>
+    </view>
+  </block>
   <view wx:elif="{{cars.length === 0}}" class="empty">无符合条件的车辆</view>
   <block wx:else>
     <view

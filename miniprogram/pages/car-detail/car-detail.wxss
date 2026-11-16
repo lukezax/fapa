@@ -175,3 +175,19 @@
   font-size: 22rpx;
   color: #a0a0b0;
 }
+
+/* ---------- 加载骨架 ---------- */
+.sk-card { padding: 28rpx 24rpx; }
+.sk-line {
+  height: 26rpx;
+  margin-bottom: 20rpx;
+  background: #eef0f4;
+  border-radius: 8rpx;
+}
+.sk-line:last-child { margin-bottom: 0; }
+.sk-w30 { width: 30%; }
+.sk-w40 { width: 40%; }
+.sk-w50 { width: 50%; }
+.sk-w60 { width: 60%; }
+.sk-w70 { width: 70%; }
+.sk-w85 { width: 85%; }

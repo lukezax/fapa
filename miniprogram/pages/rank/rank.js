@@ -20,7 +20,9 @@ Page({
     bandNote: '',
     singlePage: false,  // 朋友圈单页模式：无 tabBar、不可跳转
     shareCard: null,    // 单页模式兜底摘要（分享链接自带，不依赖云调用）
-    queryFailed: false
+    queryFailed: false,
+    dataMeta: null,     // 本期数据版本（结果页「本期数据已更新」标识）
+    totalText: ''       // 参与人数（千分位）
   },
 
   // 从 mine 页历史点击进入：options.times / options.reg_time（已 encodeURIComponent）
@@ -143,6 +145,8 @@ Page({
           topCards: decorated.topCards,
           goodPicks: decorated.goodPicks,
           bandNote: decorated.bandNote,
+          dataMeta: this.formatMeta(res.data_meta),
+          totalText: String(res.total || '').replace(/\B(?=(\d{3})+(?!\d))/g, ','),
           loading: false
         });
       })
@@ -163,6 +167,7 @@ Page({
       topCards: [],
       goodPicks: [],
       bandNote: '',
+      dataMeta: null,
       loading: false
     });
   },
@@ -271,6 +276,17 @@ Page({
       })),
       bandNote: '档位按顶格价每 5 万元划分；同类人 = 分位与你相近（±' + (res.band_half || 2.5) + '%）的历史中拍者 '
         + ((res.band_sample || 0)) + ' 人；某档概率 = 同类在该档成交人数 ÷ 该档全部成交人数，再跨档位归一（两边窗口各归一：历年累计 / 最近 6 期）'
+    };
+  },
+
+  // 本期数据版本 → 展示文案（11416 → 11,416；2026-11-16 → 11-16）
+  formatMeta(m) {
+    if (!m || !m.pool_count) return null;
+    return {
+      period: m.period || '',
+      countText: String(m.pool_count).replace(/\B(?=(\d{3})+(?!\d))/g, ','),
+      updatedText: String(m.pool_updated_at || '').slice(5) || '',
+      carsUpdatedText: String(m.cars_updated_at || '').slice(5) || ''
     };
   },
 

@@ -8,6 +8,8 @@ Page({
   data: {
     car: null,
     isFavorite: false,
+    loading: true,     // 请求中：显示骨架，不显示「车辆不存在」
+    notFound: false,   // 请求明确 404 后才显示空态
     singlePage: false,
     shareCar: null,   // 单页模式兜底（分享链接自带车名/限价）
     display: null,
@@ -24,10 +26,19 @@ Page({
     }
     const carLink = options.car_link ? decodeURIComponent(options.car_link) : '';
     if (!carLink) {
-      this.setData({ car: null });
+      this.setData({ car: null, loading: false, notFound: true });
       return;
     }
     this.carLink = carLink;
+
+    // 首帧直出：列表页点击时已把该车数据写入全局缓存，先渲染再补全
+    const cached = getApp().globalData.carCache && getApp().globalData.carCache[carLink];
+    if (cached) {
+      this.setData({
+        car: cached,
+        display: this.buildDisplay(cached, null)
+      });
+    }
     this.fetchDetail();
   },
 
@@ -36,23 +47,30 @@ Page({
     app.callFunction('cars', { method: 'detail', car_link: this.carLink })
       .then(res => {
         const car = res.car;
+        if (car) {
+          // 回填缓存，返回列表再进时更快
+          const cache = app.globalData.carCache = app.globalData.carCache || {};
+          cache[this.carLink] = car;
+        }
         this.setData({
           car,
           isFavorite: !!res.is_favorite,
+          loading: false,
+          notFound: !car,
           display: this.buildDisplay(car, res.winner)
         });
       })
       .catch(err => {
-        wx.showToast({
-          title: err.message || '加载失败',
-          icon: 'none',
-          duration: 2000
-        });
-        // 非本期车辆：返回列表
-        if (err && /非本期/.test(err.message)) {
+        const msg = (err && err.message) || '加载失败';
+        const missing = /不存在|非本期/.test(msg);
+        this.setData({ loading: false, notFound: missing });
+        if (!missing) {
+          wx.showToast({ title: msg, icon: 'none', duration: 2000 });
+        } else {
+          // 非本期/不存在：给出空态后自动返回，避免用户卡在死链
           setTimeout(() => wx.navigateBack({
             fail: () => wx.switchTab({ url: '/pages/cars/cars' })
-          }), 1500);
+          }), 2500);
         }
       });
   },

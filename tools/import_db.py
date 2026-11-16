@@ -21,6 +21,8 @@ import csv
 import json
 import re
 import argparse
+import datetime
+import shutil
 from collections import OrderedDict
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -274,6 +276,48 @@ def _read_csv_dict(path):
         return list(csv.DictReader(f))
 
 
+# ══════════════════════════════════════════════
+# 4. meta — 本期数据版本（单条文档）
+# ══════════════════════════════════════════════
+def _file_date(path):
+    """文件修改日期（YYYY-MM-DD），用于标注数据更新时间。"""
+    if not os.path.exists(path):
+        return ""
+    return datetime.date.fromtimestamp(os.path.getmtime(path)).isoformat()
+
+
+def build_meta(out_dir, current_zcid, pool_zcid, winner_zcids, counts):
+    """生成 meta.jsonl（单条文档），供 rank/cars/trends 云函数读取本期数据版本。
+
+    _id 固定为 'current'，云端用 doc('current').get() 一次读取。
+    """
+    pool_updated_at = _file_date(
+        os.path.join(DOWNLOADS_DIR, str(pool_zcid), f"gsxx_{pool_zcid}.csv")
+    )
+    cars_updated_at = _file_date(
+        os.path.join(DOWNLOADS_DIR, str(current_zcid), "result_detail.csv")
+    )
+    doc = {
+        "_id": "current",
+        "period": period_of(current_zcid),
+        "pool_zcid": int(pool_zcid),
+        "pool_count": counts.get("pool_all", 0),
+        "pool_updated_at": pool_updated_at,
+        "cars_zcid": int(current_zcid),
+        "cars_count": counts.get("cars", 0),
+        "cars_updated_at": cars_updated_at,
+        "winners_count": counts.get("winners", 0),
+        "winners_periods": len(winner_zcids),
+        "winners_latest_zcid": max(winner_zcids) if winner_zcids else None,
+        "generated_at": datetime.datetime.now().isoformat(timespec="seconds"),
+    }
+    out = os.path.join(out_dir, "meta.jsonl")
+    with open(out, "w", encoding="utf-8") as w:
+        w.write(json.dumps(doc, ensure_ascii=False) + "\n")
+    print(f"✓ meta: 1 行 → {out}")
+    return doc
+
+
 def get_all_zcids():
     return sorted(
         int(d) for d in os.listdir(DOWNLOADS_DIR)
@@ -330,6 +374,7 @@ def main():
     counts["cars"] = build_cars(
         car_zcids, out_dir, include_winner_only=args.include_history_cars
     )
+    meta = build_meta(out_dir, current_zcid, pool_zcid, winner_zcids, counts)
 
     manifest = {
         "generated_at": __import__("datetime").datetime.now().isoformat(timespec="seconds"),
@@ -337,14 +382,22 @@ def main():
         "pool_zcid": None if args.all_pool else pool_zcid,
         "winner_zcids": winner_zcids,
         "counts": counts,
+        "meta": meta,
     }
     manifest_path = os.path.join(out_dir, "manifest.json")
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(manifest, f, ensure_ascii=False, indent=2)
 
+    # 控制台导入只认 .json 扩展名：同步生成副本，避免手动拷贝漏掉导致导入旧数据
+    for name in ("pool_all", "winners", "cars", "meta"):
+        src = os.path.join(out_dir, f"{name}.jsonl")
+        dst = os.path.join(out_dir, f"{name}.json")
+        if os.path.exists(src):
+            shutil.copyfile(src, dst)
+
     print(f"\n完成。{manifest_path}")
     print(json.dumps(manifest, ensure_ascii=False, indent=2))
-    print(f"\n将 {out_dir} 下的 .json 文件通过 云开发控制台 → 数据库 → 导入 上传。")
+    print(f"\n将 {out_dir} 下的 .json 文件（已与 .jsonl 同步）通过 云开发控制台 → 数据库 → 导入 上传。")
 
 
 if __name__ == "__main__":

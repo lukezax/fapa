@@ -88,7 +88,9 @@ Page({
       pageSize: PAGE_SIZE,
       filters: this.data.filters,
       sort: this.data.sort,
-      dir: this.data.dir
+      dir: this.data.dir,
+      // 筛选选项一次导库内不变：首次拉取，之后复用（云函数端另有缓存）
+      needOptions: isFirst && !this._optionsLoaded
     }).then(res => {
       if (seq !== this._reqSeq) return;
       const cars = (isFirst ? [] : this.data.cars).concat((res.cars || []).map(c => this.decorateCar(c)));
@@ -100,7 +102,10 @@ Page({
         loadingMore: false,
         noMore: cars.length >= (res.total || 0)
       });
-      this.applyOptions(res.options || {});
+      if (res.options) {
+        this.applyOptions(res.options);
+        this._optionsLoaded = true;
+      }
     }).catch(err => {
       if (seq !== this._reqSeq) return;
       this.setData({ loading: false, loadingMore: false });
@@ -219,6 +224,13 @@ Page({
   // ---- 列表 ----
   onCardTap(e) {
     const link = e.currentTarget.dataset.link;
+    if (!link) return;
+    const app = getApp();
+    const car = (this.data.cars || []).find(c => c.car_link === link);
+    if (car) {
+      app.globalData.carCache = app.globalData.carCache || {};
+      app.globalData.carCache[link] = car;
+    }
     wx.navigateTo({ url: '/pages/car-detail/car-detail?car_link=' + encodeURIComponent(link) });
   },
 

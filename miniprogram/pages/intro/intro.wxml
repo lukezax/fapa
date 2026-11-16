@@ -40,7 +40,7 @@
   <view class="card">
     <view class="card-title">数据说明</view>
     <view class="intro-stat-row"><text class="intro-stat-label">本期在售</text><text class="intro-stat-val">506 台（202611期）</text></view>
-    <view class="intro-stat-row"><text class="intro-stat-label">排名资格池</text><text class="intro-stat-val">12,972 人（2400期）</text></view>
+    <view class="intro-stat-row"><text class="intro-stat-label">排名资格池</text><text class="intro-stat-val">11,504 人（202611期）</text></view>
     <view class="intro-stat-row"><text class="intro-stat-label">历史成交</text><text class="intro-stat-val">5,407 条（15 期）</text></view>
     <view class="intro-stat-row"><text class="intro-stat-label">历史用途</text><text class="intro-stat-val">仅用于本期车型推荐</text></view>
   </view>

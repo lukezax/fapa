@@ -100,6 +100,44 @@ async function latestZcid() {
   return CURRENT_ZCID;
 }
 
+// 本期数据版本（meta 文档，模块级缓存 10 分钟）
+let _metaCache = { ts: 0, data: null };
+const META_TTL = 10 * 60 * 1000;
+
+async function getMeta() {
+  const now = Date.now();
+  if (_metaCache.data && now - _metaCache.ts < META_TTL) return _metaCache.data;
+  let data = null;
+  try {
+    const res = await db.collection('meta').doc('current').get();
+    data = res.data || null;
+  } catch (e) {
+    data = null;
+  }
+  _metaCache = { ts: now, data };
+  return data;
+}
+
+// 筛选选项（品牌/法院/燃料/排放）：一次导库内不变，模块级缓存 30 分钟
+let _optCache = { zcid: 0, ts: 0, data: null };
+const OPT_TTL = 30 * 60 * 1000;
+
+async function getOptions(zcid) {
+  const now = Date.now();
+  if (_optCache.data && _optCache.zcid === zcid && now - _optCache.ts < OPT_TTL) {
+    return _optCache.data;
+  }
+  const [brands, courts, fuelTypes, emissions] = await Promise.all([
+    aggregateDistinct('brand', zcid),
+    aggregateDistinct('court', zcid),
+    aggregateDistinct('fuel_type', zcid),
+    aggregateDistinct('emission_standard', zcid)
+  ]);
+  const data = { brands, courts, fuel_types: fuelTypes, emissions };
+  _optCache = { zcid, ts: now, data };
+  return data;
+}
+
 async function list(event) {
   const zcid = CURRENT_ZCID;
   const page = Math.max(1, parseInt(event.page, 10) || 1);
@@ -107,11 +145,29 @@ async function list(event) {
   const filters = event.filters || {};
   const sort = event.sort || 'start_price';
   const dir = event.dir === 'desc' ? 'desc' : 'asc';
+  const needOptions = event.needOptions !== false;
 
   const where = buildWhere(filters, zcid);
   const collection = db.collection('cars');
 
-  const countRes = await collection.where(where).count();
+  // 聚合管道排序：可空字段（里程/违章）升序时 null 恒排最后
+  const nullKey = '_null_' + sort;
+  const sortSpec = { [nullKey]: 1 };
+  sortSpec[sort] = dir === 'asc' ? 1 : -1;
+
+  // count 与列表聚合并发；筛选选项命中缓存时零查询
+  const [countRes, res, options] = await Promise.all([
+    collection.where(where).count(),
+    collection.aggregate()
+      .match(where)
+      .addFields({ [nullKey]: $.eq(['$' + sort, null]) })
+      .sort(sortSpec)
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .end(),
+    needOptions ? getOptions(zcid) : Promise.resolve(null)
+  ]);
+
   const total = countRes.total;
 
   // 防御：集合里有数据但本期(2464)查不到 → 大概率是旧版数据未重新导入
@@ -129,35 +185,14 @@ async function list(event) {
     }
   }
 
-  // 聚合管道排序：可空字段（里程/违章）升序时 null 恒排最后
-  const nullKey = '_null_' + sort;
-  const sortSpec = { [nullKey]: 1 };
-  sortSpec[sort] = dir === 'asc' ? 1 : -1;
-  const res = await collection.aggregate()
-    .match(where)
-    .addFields({ [nullKey]: $.eq(['$' + sort, null]) })
-    .sort(sortSpec)
-    .skip((page - 1) * pageSize)
-    .limit(pageSize)
-    .end();
-
-  const latest = await latestZcid();
-
-  // 筛选选项（与列表同一期次范围内去重）
-  const [brands, courts, fuelTypes, emissions] = await Promise.all([
-    aggregateDistinct('brand', zcid),
-    aggregateDistinct('court', zcid),
-    aggregateDistinct('fuel_type', zcid),
-    aggregateDistinct('emission_standard', zcid)
-  ]);
-
   return {
     total,
     page,
     pageSize,
     cars: res.list,
-    options: { brands, courts, fuel_types: fuelTypes, emissions },
-    latest_zcid: latest
+    options,
+    latest_zcid: zcid,
+    meta: await getMeta()
   };
 }
 
@@ -189,9 +224,16 @@ async function detail(event) {
   }
   const car = res.data[0];
 
-  // 联表 winners：同一 car_link 可能跨期重复拍卖，优先取与车辆同期的记录
+  // 联表 winners 与收藏态并发（无 openid 时跳过收藏查询）
+  const [wRes, favRes] = await Promise.all([
+    db.collection('winners').where({ car_link }).limit(10).get(),
+    openid
+      ? db.collection('favorites').where({ openid, car_link }).count()
+      : Promise.resolve({ total: 0 })
+  ]);
+
+  // 同一 car_link 可能跨期重复拍卖，优先取与车辆同期的记录
   let winner = null;
-  const wRes = await db.collection('winners').where({ car_link }).limit(10).get();
   if (wRes.data.length) {
     const match = wRes.data.find(w => w.result_zcid === car.zcid) || wRes.data[0];
     winner = {
@@ -203,14 +245,7 @@ async function detail(event) {
     };
   }
 
-  let isFavorite = false;
-  if (openid && car_link) {
-    const fav = await db.collection('favorites')
-      .where({ openid, car_link }).count();
-    isFavorite = fav.total > 0;
-  }
-
-  return { car, winner, is_favorite: isFavorite };
+  return { car, winner, is_favorite: favRes.total > 0 };
 }
 
 async function zcids() {

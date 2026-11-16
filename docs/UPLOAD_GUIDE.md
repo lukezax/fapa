@@ -72,7 +72,7 @@ globalData: {
 
 | 步骤 | 操作 |
 |---|---|
-| 1. 创建集合 | 依次创建 5 个集合：`pool_all`、`cars`、`winners`、`favorites`、`histories` |
+| 1. 创建集合 | 依次创建 6 个集合：`pool_all`、`cars`、`winners`、`meta`、`favorites`、`histories` |
 | 2. 导入数据 | 每个集合点「导入」，选择 `downloads/export/` 下对应 **`.json`** 文件（不是 `.jsonl`），格式选 **JSON** |
 
 > **为什么是 `.json` 不是 `.jsonl`？** 控制台文件选择器只认 `.csv` / `.json` 扩展名，选 `.jsonl` 会提示「只支持 csv json」。内容本身没问题——微信云的 JSON 导入格式就是 JSON Lines（每行一个对象，`\n` 分隔）。项目里已生成 `.json` 副本（与 `.jsonl` 内容一致），直接用即可。
@@ -81,10 +81,13 @@ globalData: {
 
 | 集合 | 导入文件 |
 |---|---|
-| `pool_all` | `downloads/export/pool_all.json`（约 20 万行，导入耗时较长，耐心等） |
-| `cars` | `downloads/export/cars.json` |
-| `winners` | `downloads/export/winners.json` |
+| `pool_all` | `downloads/export/pool_all.json`（11,504 行，仅 202611 期；导入耗时约 1 分钟） |
+| `cars` | `downloads/export/cars.json`（506 行） |
+| `winners` | `downloads/export/winners.json`（5,407 行） |
+| `meta` | `downloads/export/meta.json`（**1 行**，「本期数据已更新」标识的唯一来源，必导） |
 | `favorites` / `histories` | 空集合即可，无需导入（运行时写入） |
+
+> `tools/import_db.py` 每次运行都会把 `.jsonl` 同步复制为 `.json`，两者内容一致，不会出现导入旧文件的情况。
 
 **建索引**（pool_all 数据量大，不建索引排名查询会慢）：
 
@@ -92,7 +95,7 @@ globalData: {
 - `zcid`（升序）+ `times`（升序）
 - `zcid`（升序）+ `times`（升序）+ `reg_time`（升序）
 
-**集合权限建议**：所有读写都经过云函数（云函数持有管理员权限，不受集合权限限制），所以把 5 个集合权限都设为「所有用户不可读写」最安全；若后续前端要直连读，再改成「所有用户可读」。
+**集合权限建议**：所有读写都经过云函数（云函数持有管理员权限，不受集合权限限制），所以把 6 个集合权限都设为「所有用户不可读写」最安全；若后续前端要直连读，再改成「所有用户可读」。
 
 ---
 
@@ -158,7 +161,8 @@ globalData: {
 | 列表页数据为空 | `cars` 集合未导入 |
 | 打开提示「该小程序暂未发布」 | 正常现象，开发版/体验版即如此；发布才需审核 |
 | 扫码提示「无权限」 | 预览码失效或微信账号非开发者，改用方式 B 体验版 + 添加体验成员 |
-| 手机预览请求很慢 | pool_all 导入未完成或索引缺失，到云开发控制台确认导入行数 = 12,972（2400 期） |
+| 手机预览请求很慢 | pool_all 导入未完成或索引缺失，到云开发控制台确认导入行数 = 11,504（202611 期 / zcid=2464） |
+| 排名页不显示「本期数据已更新」 | `meta` 集合未导入；导入 `meta.json`（单条 `_id='current'`）后等待 ≤10 分钟缓存过期或重新部署云函数 |
 
 ---
 

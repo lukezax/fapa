@@ -1,7 +1,29 @@
 <view class="container">
-  <view wx:if="{{loading}}" class="loading">加载中...</view>
+  <!-- 骨架屏（避免整页空白） -->
+  <block wx:if="{{loading}}">
+    <view class="card sk-card">
+      <view class="sk-line sk-w40"></view>
+      <view class="sk-line sk-w80"></view>
+    </view>
+    <view class="card sk-card">
+      <view class="sk-line sk-w50"></view>
+      <view class="sk-line sk-w90"></view>
+      <view class="sk-line sk-w70"></view>
+      <view class="sk-line sk-w90"></view>
+    </view>
+    <view class="card sk-card">
+      <view class="sk-line sk-w50"></view>
+      <view class="sk-block"></view>
+    </view>
+  </block>
 
   <block wx:else>
+    <!-- 本期数据版本 -->
+    <view class="trend-fresh" wx:if="{{dataMeta}}">
+      <text class="trend-fresh-dot"></text>
+      <text class="trend-fresh-text">本期数据已更新 · {{dataMeta.period}} · {{dataMeta.countText}} 人参与 · 更新于 {{dataMeta.updatedText}}</text>
+    </view>
+
     <!-- 我的速览 -->
     <view class="card trend-brief">
       <block wx:if="{{myBrief}}">
@@ -24,12 +46,14 @@
     <view class="card" wx:if="{{condition}}">
       <view class="card-title">本期车源概览（{{currentPeriod}}）</view>
       <view class="trend-stat-row"><text>在售车辆</text><text>{{condition.total}} 台</text></view>
+      <view class="trend-stat-row" wx:if="{{dataMeta}}"><text>排名资格池</text><text>{{dataMeta.countText}} 人（{{dataMeta.period}}）</text></view>
       <view class="trend-stat-row"><text>已有里程数据</text><text>{{condition.with_mileage}} 台</text></view>
       <view class="trend-stat-row"><text>缺行驶证 / 登记证</text><text>{{condition.no_license}} / {{condition.no_registration}} 台</text></view>
       <view class="trend-stat-row"><text>缺车牌 / 钥匙</text><text>{{condition.no_plate}} / {{condition.no_key}} 台</text></view>
       <view class="trend-stat-row"><text>抵押车辆</text><text>{{condition.mortgaged}} 台</text></view>
       <view class="trend-stat-row"><text>平均额外费用</text><text>{{condition.avg_extra_fee}} 元</text></view>
-      <view class="trend-insight">历史 {{history.winners}} 条中拍记录（{{history.periods}} 期）只用于排名页推荐，本页仅统计本期在售车辆</view>
+      <view class="trend-stat-row" wx:if="{{dataMeta}}"><text>数据更新</text><text>资格池 {{dataMeta.updatedText}} · 车辆 {{dataMeta.carsUpdatedText}}</text></view>
+      <view class="trend-insight">历史 {{history.winners}} 条中拍记录（{{history.periods}} 期）只用于排名页推荐，本页仅统计本期在售车辆；历史数据本期未变</view>
     </view>
 
     <!-- 本期起拍价档位分布 -->

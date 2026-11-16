@@ -605,3 +605,36 @@
   font-weight: 600;
   color: #e74c3c;
 }
+
+/* ---------- 本期数据更新标识 ---------- */
+.rank-fresh {
+  display: flex;
+  align-items: center;
+  margin: 0 0 20rpx;
+  padding: 16rpx 24rpx;
+  background: #eaf7ee;
+  border: 1rpx solid #c9e9d4;
+  border-radius: 12rpx;
+}
+
+.rank-fresh-dot {
+  flex-shrink: 0;
+  width: 12rpx;
+  height: 12rpx;
+  margin-right: 14rpx;
+  background: #27ae60;
+  border-radius: 50%;
+  animation: rank-fresh-pulse 1.8s ease-out 3;
+}
+
+@keyframes rank-fresh-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.5); }
+  70% { box-shadow: 0 0 0 12rpx rgba(39, 174, 96, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0); }
+}
+
+.rank-fresh-text {
+  font-size: 23rpx;
+  color: #1e8449;
+  line-height: 1.5;
+}

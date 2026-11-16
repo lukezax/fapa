@@ -3,7 +3,11 @@
 > 云函数与前端共享的唯一契约。前端调用云函数，云函数读写云数据库。任何字段修改须同步此文档。
 >
 > **202611 期（2464）调整**：`cars` 集合只存本期在售车辆（zcid=2464）；历史中拍（`winners`）
-> 与资格池（`pool_all`，仅 2400 期）只用于 `rank` 云函数的推荐，不再提供历史车辆列表。
+> 与资格池（`pool_all`，仅 2464 期）只用于 `rank` 云函数的推荐，不再提供历史车辆列表。
+>
+> **v4.5 期次切换（2026-11-16）**：资格池切换为 202611 期（2464，11,504 人），旧 2400 期
+> 12,972 条保留在库（`rank` 只取 `meta.pool_zcid`，回滚时改 `meta` 即可）；新增 `meta` 集合
+> 单条文档 `_id='current'` 作为「本期数据已更新」标识的唯一事实来源。
 >
 > **v3 变更（成功率推荐）**：`recommendation` 改为按**本期成功率**分级（≥75 强烈推荐 / 55-74 推荐 /
 > 35-54 可考虑 / <35 观望），弃用 match_pct 占比分级；新增 `success_rate` / `cover_rate` /
@@ -19,9 +23,10 @@
 
 | 集合 | 说明 | 关键索引 |
 |---|---|---|
-| `pool_all` | 排名资格池（仅最新期 2400，12,972 行）| `(zcid, times)`, `(zcid, times, reg_time)` 复合索引 |
+| `pool_all` | 排名资格池（2464 期 11,504 行；旧 2400 期 12,972 行保留）| `(zcid, times)`, `(zcid, times, reg_time)` 复合索引 |
 | `cars` | 本期在售车辆（仅 zcid=2464，506 行）| `(zcid, final_price)`, `(zcid, brand)` |
 | `winners` | 历史中拍者画像（331–2400 期，5,407 条，仅用于推荐）| `result_zcid`, `price_bracket` |
+| `meta` | 本期数据版本（单条文档 `_id='current'`，导库时生成）| 无（`doc('current')` 直取） |
 | `favorites` | 收藏 | `openid` |
 | `histories` | 查询历史 | `openid` |
 
@@ -358,3 +363,86 @@ ver: 'v4.4.0'
 - 阶梯标题「各档位中拍概率（按**顶格价**升序）」
 - 数据口径新增「价格档位按顶格价（最高限价）每 5 万元划分…不是按起拍价」
 - 修复：达标但未进前三的档位原先误显示「未达标」，现显示「达标」
+
+---
+
+## v4.5（2026-11-16 · 期次切换 202611 / 性能与数据版本）
+
+### 期次切换
+
+| 项 | 修改前 | 修改后 |
+|---|---|---|
+| 资格池 `pool_all` | 2400 期 12,972 行 | **2464 期 11,504 行**（旧期保留可回滚）|
+| `rank` 基准期 | `max(zcid)` = 2400 | `meta.pool_zcid` = 2464 |
+| 兜底期次（`rank` / `cars`）| 2400 | 2464 |
+
+**分位变化**（同一个人 73 次 · 2011-01-01 00:23:13.023）：3759 / 12,972 = 28.98% →
+3759 / 11,504 = **32.7%**。其余档位同步上移：74次 30.3%→32.7%、80次 21.6%→23.3%、
+50次 59.2%→60.7%、30次 74.8%→75.6%。
+
+### 新增 `meta` 集合（单条文档 `_id='current'`）
+
+由 `tools/import_db.py` 的 `build_meta()` 自动生成，`downloads/export/meta.jsonl`：
+
+```
+{
+  _id: 'current',
+  period: '202611期',
+  pool_zcid: 2464, pool_count: 11504, pool_updated_at: '2026-11-16',
+  cars_zcid: 2464, cars_count: 506,   cars_updated_at: '2026-11-06',
+  winners_count: 5407, winners_periods: 15, winners_latest_zcid: 2400,
+  generated_at: '2026-11-16T10:37:28'
+}
+```
+
+`pool_updated_at` / `cars_updated_at` 取源 CSV 的文件修改日期（非导入日期）。
+
+### 出参新增 `data_meta`
+
+`rank`、`cars`（`method=list`）、`trends`（`method=overview`）均返回同样的结构（`meta` 缺失时为 `null`）：
+
+```
+data_meta: {
+  period: string, pool_zcid: int, pool_count: int, pool_updated_at: 'YYYY-MM-DD',
+  cars_count: int, cars_updated_at: 'YYYY-MM-DD',
+  winners_count: int, winners_periods: int
+} | null
+```
+
+前端据此渲染「本期数据已更新 · 202611期 · 11,504 人参与 · 更新于 11-16」：
+`rank` 放在结果区顶部，`trends` 放在页面顶部并在「本期车源概览」内加「排名资格池 / 数据更新」两行。
+
+`cars` 的 `meta` 键保留原名（未改名 `data_meta`），与 `latest_zcid` 同级。
+
+### 缓存策略（模块级，重新部署即清空）
+
+| 云函数 | 缓存 | TTL | key |
+|---|---|---|---|
+| `rank` | `meta` | 10 min | 固定 `current` |
+| `rank` | 中拍者画像（4 字段投影）| 10 min | `winners_count-winners_latest_zcid` |
+| `cars` | 筛选选项（品牌/法院/燃料/排放）| 30 min | `zcid` |
+| `cars` | `meta` | 10 min | 固定 `current` |
+| `trends` | `overview` 全量结果 | 10 min | `cars_zcid-cars_count` |
+
+导库后若前端仍显示旧版本：等待 TTL 过期或重新部署云函数。
+
+### 性能（`tcb fn invoke` Duration）
+
+| 云函数 | 修改前 | 冷启动 | 热调用 |
+|---|---|---|---|
+| `rank` | 1400ms | 1038ms | 248–340ms |
+| `cars` (`list`) | 170–234ms | 341ms | 63–65ms |
+| `trends` (`overview`) | 500–1200ms | 360ms | 1–6ms |
+
+`rank`：`computeRank` 3 个 count 并发 + 画像投影；`cars`：count/aggregate/options 三路并发 +
+`needOptions` 入参（仅首屏拉选项）；`trends`：13 个查询全部 `Promise.all` + `fallbackHistory()` 兜底。
+
+### 前端
+
+- `rank` 结果区状态条 `.rank-fresh`（绿点脉冲 3 次）、参与人数千分位 `totalText`
+- `trends` 顶部 `.trend-fresh` + 整页骨架屏
+- `cars` 首屏 3 张骨架卡片；`cars.onCardTap` 把列表数据写入 `app.globalData.carCache`
+- `car-detail` 三态（`loading` / `notFound` / 有数据）：首帧用 `carCache` 直出，无缓存时显示骨架，
+  请求明确失败才显示「车辆不存在或已下架」并 2.5s 后自动返回；修复此前请求中先渲染空态的闪白
+- `intro` 资格池文案 `12,972 人（2400期）` → `11,504 人（202611期）`
+- 版本号 **1.5.6**

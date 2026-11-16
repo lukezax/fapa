@@ -55,13 +55,19 @@
   <block wx:if="{{result}}">
     <view class="rank-reset" bindtap="onReset">重新查询</view>
 
+    <!-- 本期数据版本 -->
+    <view class="rank-fresh" wx:if="{{dataMeta}}">
+      <text class="rank-fresh-dot"></text>
+      <text class="rank-fresh-text">本期数据已更新 · {{dataMeta.period}} · {{dataMeta.countText}} 人参与 · 更新于 {{dataMeta.updatedText}}</text>
+    </view>
+
     <!-- 排名卡片 -->
     <view class="card rank-rank-card">
       <view class="rank-rank-main">
         <text class="rank-rank-num">{{result.rank}}</text>
         <text class="rank-rank-suffix">名</text>
       </view>
-      <view class="rank-rank-sub">共 {{result.total}} 人参与 · 前 {{result.user_pct}}%</view>
+      <view class="rank-rank-sub">共 {{totalText}} 人参与 · 前 {{result.user_pct}}%</view>
       <view class="rank-share-row">
         <button class="rank-share-btn" open-type="share">分享给朋友</button>
         <view class="rank-share-btn rank-share-timeline" bindtap="onTimelineTap">分享到朋友圈</view>

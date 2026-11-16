@@ -328,3 +328,17 @@
   padding: 8rpx 14rpx;
   margin-top: 8rpx;
 }
+
+/* ---------- 首屏骨架 ---------- */
+.sk-card { padding: 28rpx 24rpx; }
+.sk-line {
+  height: 26rpx;
+  margin-bottom: 20rpx;
+  background: #eef0f4;
+  border-radius: 8rpx;
+}
+.sk-line:last-child { margin-bottom: 0; }
+.sk-w30 { width: 30%; }
+.sk-w50 { width: 50%; }
+.sk-w70 { width: 70%; }
+.sk-w85 { width: 85%; }
