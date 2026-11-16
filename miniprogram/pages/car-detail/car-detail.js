@@ -1,7 +1,7 @@
 // pages/car-detail/car-detail.js — 本期在售车辆详情页（仅 202611期 / 2464）
 const { toWan, toWanWithComma, formatViolation, formatPeriod, formatRegTime } = require('../../utils/format');
 const { AD_UNITS } = require('../../utils/ad');
-const { CURRENT_PERIOD } = require('../../utils/constants');
+const { CURRENT_PERIOD, PERIOD_MAP } = require('../../utils/constants');
 const { enableShareMenu, isSinglePage, guideTimelineShare, singlePageTip } = require('../../utils/share');
 
 Page({
@@ -83,6 +83,9 @@ Page({
       ? (winner.winner_rank / winner.total_bidders * 100).toFixed(1) : '';
     const display = {
       limitText: toWanWithComma(car.limit_price),
+      startText: toWanWithComma(car.start_price),
+      finalText: toWanWithComma(car.final_price),
+      isUnsold: car.status === '流拍',
       licenseText: yesNo(car.has_license),
       registrationText: yesNo(car.has_registration),
       plateText: yesNo(car.has_plate),
@@ -111,7 +114,7 @@ Page({
       ? winner.winner_rank + ' / ' + winner.total_bidders + (winnerPct ? '（前 ' + winnerPct + '%）' : '')
       : '';
     display.winnerRegText = winner ? formatRegTime(winner.winner_reg_time) || '—' : '';
-    display.winnerZcidText = winner ? formatPeriod(String(winner.result_zcid)) + '期' : '';
+    display.winnerZcidText = winner ? (PERIOD_MAP[winner.result_zcid] || winner.result_zcid + '期') : '';
     // 历史期次车无 LLM 详情：整块隐藏全空区块
     display.hasDocs = hasVal(display.licenseText) || hasVal(display.registrationText)
       || hasVal(display.plateText) || hasVal(display.keyText);

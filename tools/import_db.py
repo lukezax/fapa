@@ -202,6 +202,7 @@ def build_cars(zcids, out_dir, include_winner_only=False):
                     "court": row.get("court", "") or llm.get("court", ""),
                     "start_price": to_num(row.get("start_price")) or to_num(llm.get("start_price")),
                     "final_price": to_num(row.get("final_price")) or to_num(llm.get("final_price")),
+                    "status": row.get("status", ""),
                     "limit_price": to_num(lm.get("limit_price")),
                     "brand": extract_brand(car_name),
                     "has_license": llm.get("has_license", ""),
@@ -225,6 +226,55 @@ def build_cars(zcids, out_dir, include_winner_only=False):
                     "inspection_expiry": llm.get("inspection_expiry", ""),
                     "vehicle_model": llm.get("vehicle_model", ""),
                     "source": "detail" if llm else "detail_partial",
+                }
+                w.write(json.dumps(doc, ensure_ascii=False) + "\n")
+                written_links.add(link)
+                count += 1
+
+            # 结果公示页不含「0 次报价」的车（无人报名），但车本身仍属本期。
+            # 用该期车辆清单（cars_<zcid>.csv）补齐，状态标为流拍。
+            car_csv = os.path.join(d, f"cars_{zcid}.csv")
+            for row in _read_csv_dict(car_csv):
+                link = row.get("car_link", "")
+                if not link or link in written_links:
+                    continue
+                llm = llms.get(link, {})
+                ml = mileages.get(link, {})
+                lm = limits.get(link, {})
+                car_name = row.get("car_name", "") or llm.get("car_name", "")
+                doc = {
+                    "car_link": link,
+                    "car_name": car_name,
+                    "zcid": zcid,
+                    "period": period_of(zcid),
+                    "item_no": row.get("item_no", "") or llm.get("item_no", ""),
+                    "court": row.get("court", "") or llm.get("court", ""),
+                    "start_price": to_num(row.get("start_price")) or to_num(lm.get("limit_price")),
+                    "final_price": None,
+                    "limit_price": to_num(row.get("limit_price")) or to_num(lm.get("limit_price")),
+                    "status": "流拍",
+                    "brand": extract_brand(car_name),
+                    "has_license": llm.get("has_license", ""),
+                    "has_registration": llm.get("has_registration", ""),
+                    "has_plate": llm.get("has_plate", ""),
+                    "has_key": llm.get("has_key", ""),
+                    "use_type": llm.get("use_type", ""),
+                    "fuel_type": normalize_fuel(llm.get("fuel_type", "")),
+                    "emission_standard": llm.get("emission_standard", ""),
+                    "violation_count": to_num(llm.get("violation_count"), int),
+                    "violation_points": to_num(llm.get("violation_points"), int),
+                    "violation_fine": to_num(llm.get("violation_fine")),
+                    "is_mortgaged": llm.get("is_mortgaged", ""),
+                    "parking_fee": to_num(llm.get("parking_fee")),
+                    "repair_fee": to_num(llm.get("repair_fee")),
+                    "total_extra_fee": to_num(llm.get("total_extra_fee")),
+                    "deposit": to_num(llm.get("deposit")),
+                    "mileage_km": to_num(ml.get("mileage_km"), int),
+                    "preview_location": llm.get("preview_location", ""),
+                    "first_reg_date": llm.get("first_reg_date", ""),
+                    "inspection_expiry": llm.get("inspection_expiry", ""),
+                    "vehicle_model": llm.get("vehicle_model", ""),
+                    "source": "detail_partial",
                 }
                 w.write(json.dumps(doc, ensure_ascii=False) + "\n")
                 written_links.add(link)
@@ -333,6 +383,12 @@ def get_latest_pool_zcid(all_zcids):
     return max(all_zcids) if all_zcids else 2400
 
 
+def has_results(zcid):
+    """该期 result_detail 是否已出成交价（竞价结束后才有）。"""
+    rows = _read_csv_dict(os.path.join(DOWNLOADS_DIR, str(zcid), "result_detail.csv"))
+    return any((r.get("final_price") or "").strip() for r in rows)
+
+
 def main():
     parser = argparse.ArgumentParser(description="CSV → 云数据库 JSONL 导入工具")
     parser.add_argument("--zcid", action="append", help="兼容旧参数：只导入指定期次（可多次）")
@@ -360,6 +416,10 @@ def main():
     else:
         pool_zcids = [] if args.all_pool else [pool_zcid]
         winner_zcids = [z for z in all_zcids if z != current_zcid]
+        # 本期竞价已结束（result_detail 有成交价）→ 本期也进 winners，
+        # 详情页才能显示「成交信息」，档位概率也才含本期先例。
+        if has_results(current_zcid) and current_zcid not in winner_zcids:
+            winner_zcids = sorted(winner_zcids + [current_zcid])
         car_zcids = [current_zcid]
 
     print(f"输出目录: {out_dir}")

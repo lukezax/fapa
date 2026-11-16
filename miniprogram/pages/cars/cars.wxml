@@ -209,7 +209,7 @@
 
   <!-- 本期标识 -->
   <view class="period-bar">
-    <text class="period-name">202611期 · 本期在售</text>
+    <text class="period-name">202611期 · 成交结果</text>
     <text class="period-count" wx:if="{{total}}">共 {{total}} 台</text>
   </view>
 
@@ -253,6 +253,8 @@
       <view class="car-name">{{item.car_name}}</view>
       <view class="car-price-row">
         <text class="car-start">限价 {{item.limitText}}</text>
+        <text class="car-final" wx:if="{{item.finalText}}">成交 {{item.finalText}}</text>
+        <text class="car-unsold" wx:elif="{{item.status === '流拍'}}">流拍</text>
       </view>
       <view class="car-tags" wx:if="{{item.fuelEmissionText || item.docsText || item.extraFeeText}}">
         <text class="tag" wx:if="{{item.fuelEmissionText}}">{{item.fuelEmissionText}}</text>

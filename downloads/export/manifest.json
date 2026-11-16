@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-16T10:48:44",
+  "generated_at": "2026-11-16T17:57:59",
   "current_zcid": 2464,
   "pool_zcid": 2464,
   "winner_zcids": [
@@ -17,11 +17,12 @@
     1897,
     2041,
     2238,
-    2400
+    2400,
+    2464
   ],
   "counts": {
     "pool_all": 11504,
-    "winners": 5407,
+    "winners": 5911,
     "cars": 506
   },
   "meta": {
@@ -32,10 +33,10 @@
     "pool_updated_at": "2026-11-16",
     "cars_zcid": 2464,
     "cars_count": 506,
-    "cars_updated_at": "2026-11-06",
-    "winners_count": 5407,
-    "winners_periods": 15,
-    "winners_latest_zcid": 2400,
-    "generated_at": "2026-11-16T10:48:44"
+    "cars_updated_at": "2026-11-16",
+    "winners_count": 5911,
+    "winners_periods": 16,
+    "winners_latest_zcid": 2464,
+    "generated_at": "2026-11-16T17:57:59"
   }
 }

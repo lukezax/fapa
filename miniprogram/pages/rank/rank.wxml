@@ -16,7 +16,7 @@
         <text class="rank-sc-bk">★{{index + 1}} {{it.bracket}}</text>
         <text class="rank-sc-prob">{{it.prob}}</text>
       </view>
-      <view class="rank-sc-note">单页模式仅显示摘要，完整档位表与在售车辆在完整版中查看</view>
+      <view class="rank-sc-note">单页模式仅显示摘要，完整档位表与本期车辆在完整版中查看</view>
     </view>
   </block>
 
@@ -93,7 +93,7 @@
           <text class="tag rank-rec-strong">达标 {{rec.thin ? "(仅近6期口径)" : "(历年累计)"}} · 概率 {{rec.prob_text}} / 近6期 {{rec.prob6_text}}</text>
         </view>
         <view class="rank-bk-current">
-          <view class="rank-bk-top5-title">本期在售 · 顶格价最低 {{rec.cars.length}} 台（出价方式：直接顶格）</view>
+          <view class="rank-bk-top5-title">本期成交 · 顶格价最低 {{rec.cars.length}} 台（成交价 = 最高限价）</view>
           <view class="rank-car-row" wx:for="{{rec.cars}}" wx:for-item="m" wx:key="car_link"
             bindtap="onCarTap" data-link="{{m.car_link}}">
             <text class="rank-car-name">{{m.car_name}}</text>
@@ -113,7 +113,7 @@
         <text class="rank-ladder-bk">档位</text>
         <text class="rank-ladder-col">概率·历年</text>
         <text class="rank-ladder-col">概率·近6期</text>
-        <text class="rank-ladder-col">本期在售</text>
+        <text class="rank-ladder-col">本期台数</text>
         <text class="rank-ladder-last">判定</text>
       </view>
       <view class="rank-ladder-row {{item.pass ? '' : 'rank-ladder-dim'}}" wx:for="{{ladderRows}}" wx:key="bracket">
@@ -123,7 +123,7 @@
         <text class="rank-ladder-col">{{item.supply}}</text>
         <text class="rank-ladder-last">
           <text wx:if="{{item.star}}" class="rank-ladder-star">★{{item.star}}</text>
-          <text wx:elif="{{item.noSupply}}" class="rank-ladder-no">无在售</text>
+          <text wx:elif="{{item.noSupply}}" class="rank-ladder-no">本期无车</text>
           <text wx:elif="{{item.thinSample}}" class="rank-ladder-no">样本不足</text>
           <text wx:elif="{{item.pass}}" class="rank-ladder-pass">达标</text>
           <text wx:else class="rank-ladder-no">未达标</text>

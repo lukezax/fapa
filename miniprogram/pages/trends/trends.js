@@ -139,7 +139,7 @@ Page({
         splitLine: { lineStyle: { color: '#f0f2f5' } }
       },
       series: [{
-        name: '在售台数',
+        name: '本期台数',
         type: 'bar',
         data: counts,
         barWidth: '50%',

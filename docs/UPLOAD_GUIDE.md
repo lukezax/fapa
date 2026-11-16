@@ -82,8 +82,8 @@ globalData: {
 | 集合 | 导入文件 |
 |---|---|
 | `pool_all` | `downloads/export/pool_all.json`（11,504 行，仅 202611 期；导入耗时约 1 分钟） |
-| `cars` | `downloads/export/cars.json`（506 行） |
-| `winners` | `downloads/export/winners.json`（5,407 行） |
+| `cars` | `downloads/export/cars.json`（506 行 = 504 成交 + 2 流拍，带 `final_price` / `status`） |
+| `winners` | `downloads/export/winners.json`（5,911 行 = 历史 5,407 + 本期 504） |
 | `meta` | `downloads/export/meta.json`（**1 行**，「本期数据已更新」标识的唯一来源，必导） |
 | `favorites` / `histories` | 空集合即可，无需导入（运行时写入） |
 

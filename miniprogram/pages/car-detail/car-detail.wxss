@@ -85,9 +85,15 @@
 }
 
 .price-final {
-  font-size: 44rpx;
+  font-size: 40rpx;
   font-weight: 700;
   color: #e74c3c;
+}
+
+.price-unsold {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #a0a0b0;
 }
 
 .price-ratio {

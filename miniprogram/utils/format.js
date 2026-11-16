@@ -36,9 +36,9 @@ module.exports = {
     return cleaned.split('.')[0];
   },
 
-  // 期次显示
+  // 期次显示（统一带「期」）
   formatPeriod(period) {
     if (!period) return '';
-    return period.replace('期', '');
+    return period.indexOf('期') >= 0 ? period : period + '期';
   }
 };

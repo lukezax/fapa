@@ -124,6 +124,8 @@ Page({
     return {
       ...c,
       limitText: c.limit_price != null && c.limit_price !== '' ? toWan(c.limit_price) : '—',
+      finalText: c.final_price ? toWan(c.final_price) : '',
+      startText: c.start_price ? toWan(c.start_price) : '—',
       mileageText: c.mileage_km ? (c.mileage_km / 10000).toFixed(1) + '万km' : '—',
       violationText: formatViolation(c.violation_count, c.violation_points, c.violation_fine),
       periodText: formatPeriod(c.period),

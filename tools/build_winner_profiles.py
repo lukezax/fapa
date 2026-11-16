@@ -73,6 +73,13 @@ def load_and_rank_gsxx(zcid):
 
 
 def main():
+    global args
+    import argparse
+    ap = argparse.ArgumentParser(description="生成 winner_profiles.csv")
+    ap.add_argument("--dedupe-zcid", action="append", type=str,
+                    help="对这些期次按 car_link 去重（前 7 位碰撞，取名次最好的候选）；可多次")
+    args = ap.parse_args()
+
     print("读取 combined.csv 中拍记录...")
     winners = []
     with open(COMBINED_PATH, "r", encoding="utf-8") as f:
@@ -140,6 +147,32 @@ def main():
             else:
                 stats_not_found += 1
 
+    # 同一台车只能有一个中标人。
+    # 公示只公开申请编码前 7 位，同前 7 位可能对应多名资格池成员，会产生同一 car_link 多条记录。
+    # 按竞价规则（统一顶格出价 → 摇号次数多、注册早者先得）取候选里名次最好的一条。
+    # 历史期次默认保留原样（老数据已上线），只对 --dedupe-zcid 指定的期次去重。
+    dedupe_zcids = set(args.dedupe_zcid or [])
+    if dedupe_zcids:
+        best, kept = {}, []
+        dropped = 0
+        for r in output_rows:
+            if r["result_zcid"] not in dedupe_zcids:
+                kept.append(r)
+                continue
+            key = (r["result_zcid"], r["car_link"])
+            cur = best.get(key)
+            if cur is None:
+                best[key] = r
+            elif int(r["winner_rank"]) < int(cur["winner_rank"]):
+                best[key] = r
+                dropped += 1
+            else:
+                dropped += 1
+        output_rows = kept + sorted(best.values(),
+                                    key=lambda r: (int(r["result_zcid"]), int(r["winner_rank"])))
+    else:
+        dropped = 0
+
     # 写入输出
     fieldnames = [
         "prefix", "result_zcid", "car_name", "car_link",
@@ -153,6 +186,8 @@ def main():
 
     print(f"\n结果统计:")
     print(f"  找到中拍排名 (写入文件): {stats_found}")
+    print(f"  同车前 7 位碰撞丢弃:     {dropped}")
+    print(f"  去重后中拍记录:          {len(output_rows)}")
     print(f"  未找到匹配记录:          {stats_not_found}")
     print(f"  期次文件缺失跳过:        {stats_period_errors}")
     print(f"  输出文件:                {OUTPUT_PATH}")
